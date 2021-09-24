@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r}
 library(OTools)
+library(xlsx)
 ```
 
 
@@ -15,5 +16,15 @@ files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
 pcrit.files=grep("pcrit",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(resp.files,pcrit.files)
+```
+
+
+```{r}
+data.log=read.xlsx("Muus Data Log.xlsx",sheetIndex = 1)
+```
+
+
+```{r}
+grep(basename(rmr.files[1]),data.log$File.name)
 ```
 
