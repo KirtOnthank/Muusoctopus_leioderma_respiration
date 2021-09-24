@@ -1,0 +1,27 @@
+---
+title: "Group 3 1000 7-20-21"
+author: "Trueblood"
+date: "9/15/2021"
+output:
+  word_document: default
+  pdf_document: default
+---
+# loading libraries
+```{r}
+library(OTools)
+```
+
+
+# reading in data
+Here I am reading in the data
+```{r}
+muus=read.pyro("gr3 muus 1000 7-20-21.txt")
+```
+
+# Plotting data
+Here I am plotting data
+```{r}
+plot(muus$O21,type="l",ylim=c(150,280))
+points(muus$O22,col="red",type="l")
+```
+

@@ -1,0 +1,19 @@
+---
+title: "Muusoctopus leioderma respiration"
+author: "Lloyd Trueblood and Kirt Onthank"
+date: "9/23/2021"
+output: pdf_document
+---
+
+```{r}
+library(OTools)
+```
+
+
+```{r}
+files=list.files(recursive=T)
+resp.files=grep(".txt",files,value=T)
+pcrit.files=grep("pcrit",resp.files,value=T,ignore.case=T)
+rmr.files=setdiff(resp.files,pcrit.files)
+```
+
