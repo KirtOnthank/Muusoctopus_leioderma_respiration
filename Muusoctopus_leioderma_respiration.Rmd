@@ -5,12 +5,13 @@ date: "9/23/2021"
 output: pdf_document
 ---
 
+# Reading in libraries
 ```{r}
 library(OTools)
 library(xlsx)
 ```
 
-
+# Find the relevant files
 ```{r}
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
@@ -18,13 +19,57 @@ pcrit.files=grep("pcrit",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(resp.files,pcrit.files)
 ```
 
-
+# Reading in the data log xlsx file
 ```{r}
 data.log=read.xlsx("Muus Data Log.xlsx",sheetIndex = 1)
 ```
 
+# Running the RMR data analysis
+First I am going to make a object to put the RMR data into
+```{r}
+routine=data.frame(filename=as.character(),mass=as.numeric(),pco2=as.numeric(),rmr=as.numeric())
+```
+
+
+
+
 
 ```{r}
-grep(basename(rmr.files[1]),data.log$File.name)
+for (i in 1:length(rmr.files)){
+  filename=rmr.files[i]
+  print(paste("starting file ", basename(filename)," (loop",i,")",sep=""))
+  if(length(grep("Group 4/",filename))>0){
+    resp=read.presens(filename)
+  }else{
+    resp=read.pyro(filename)
+  }
+  print("testing for match in log")
+  if(length(grep(basename(filename),data.log$File.name))>0){
+    print("found match")
+    flow=as.numeric(data.log$flow.rate..L.min.[grep(basename(filename),data.log$File.name)])
+    mass=as.numeric(data.log$Mass..g.[grep(basename(filename),data.log$File.name)])
+    print("calculating rmr")
+   resp.mean=mean(resp.open(resp[resp$times>3600,],flow.rate=flow*1000,weight=mass)$resp)
+    print("writing data to object")
+    routine[i,1]=basename(filename)
+    routine[i,2]=mass
+
+    if(length(grep("1800",filename))>0){
+     routine[i,3]=1800
+    }
+    if(length(grep("1000",filename))>0){
+      routine[i,3]=1000
+   }
+    routine[i,4]=resp.mean
+  }else{
+    print("did not find match")
+    routine[i,1]=basename(filename)
+    routine[i,2]="NO LINE IN LOG"
+  }
+  print(paste("end of file ", basename(filename)," (loop",i,")",sep=""))
+}
+
+
+
 ```
 
