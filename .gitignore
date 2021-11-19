@@ -41,4 +41,3 @@ vignettes/*.pdf
 # Lock files
 .~lock.
 .sync*
-paths
