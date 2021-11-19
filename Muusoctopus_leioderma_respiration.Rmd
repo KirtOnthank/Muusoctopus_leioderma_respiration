@@ -15,9 +15,14 @@ library(xlsx)
 ```{r}
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
-pcrit.files=grep("pcrit",resp.files,value=T,ignore.case=T)
+pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(resp.files,pcrit.files)
 ```
+
+```{r}
+grep("blank",resp.files,value=T,ignore.case=T)
+```
+
 
 # Reading in the data log xlsx file
 ```{r}
@@ -29,8 +34,6 @@ First I am going to make a object to put the RMR data into
 ```{r}
 routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),mass=as.numeric(),pco2=as.numeric(),rmr=as.numeric())
 ```
-
-
 
 
 
