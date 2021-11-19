@@ -19,10 +19,6 @@ pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(resp.files,pcrit.files)
 ```
 
-```{r}
-grep("blank",resp.files,value=T,ignore.case=T)
-```
-
 
 # Reading in the data log xlsx file
 ```{r}
