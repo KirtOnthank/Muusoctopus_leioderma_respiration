@@ -16,7 +16,10 @@ library(xlsx)
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
 pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
-rmr.files=setdiff(resp.files,pcrit.files)
+metab.files=setdiff(resp.files,pcrit.files)
+blank.files=grep("blank",resp.files,value=T,ignore.case=T)
+rmr.files=setdiff(metab.files,blank.files)
+rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt",rmr.files)]
 ```
 
 
@@ -98,4 +101,15 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 ```{r}
 write.xlsx(routine,"RMR_Results.xlsx")
 ```
+
+# Running blanks
+
+```{r}
+blank.files=grep("blank",resp.files,value=T,ignore.case=T)
+```
+
+
+
+
+
 
