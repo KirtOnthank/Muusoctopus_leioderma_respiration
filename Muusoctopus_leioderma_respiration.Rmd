@@ -75,6 +75,8 @@ guess=which.min(adist(basename(filename),data.log$File.name))
     column.count=column.count+1
     if(sum(is.na(resp$O23))<10){
       print("found second respirometer")
+      flow=as.numeric(data.log$Flow.rate.2[guess])
+      mass=as.numeric(data.log$Mass.2[guess])
       resp.mean=mean(resp.open(resp[resp$times>3600,],inflow=3,outflow=4,flow.rate=flow*1000,weight=mass)$resp)
       print("writing data to object")
       routine[column.count,1]=basename(filename)
