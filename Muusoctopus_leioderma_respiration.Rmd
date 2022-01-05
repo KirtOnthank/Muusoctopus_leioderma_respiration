@@ -16,11 +16,10 @@ library(xlsx)
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
 pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
-rmr.files=setdiff(resp.files,pcrit.files)
-```
-
-```{r}
-grep("blank",resp.files,value=T,ignore.case=T)
+metab.files=setdiff(resp.files,pcrit.files)
+blank.files=grep("blank",resp.files,value=T,ignore.case=T)
+rmr.files=setdiff(metab.files,blank.files)
+rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt",rmr.files)]
 ```
 
 
@@ -76,6 +75,8 @@ guess=which.min(adist(basename(filename),data.log$File.name))
     column.count=column.count+1
     if(sum(is.na(resp$O23))<10){
       print("found second respirometer")
+      flow=as.numeric(data.log$Flow.rate.2[guess])
+      mass=as.numeric(data.log$Mass.2[guess])
       resp.mean=mean(resp.open(resp[resp$times>3600,],inflow=3,outflow=4,flow.rate=flow*1000,weight=mass)$resp)
       print("writing data to object")
       routine[column.count,1]=basename(filename)
@@ -102,4 +103,15 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 ```{r}
 write.xlsx(routine,"RMR_Results.xlsx")
 ```
+
+# Running blanks
+
+```{r}
+blank.files=grep("blank",resp.files,value=T,ignore.case=T)
+```
+
+
+
+
+
 
