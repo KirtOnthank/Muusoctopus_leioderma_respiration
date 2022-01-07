@@ -9,6 +9,9 @@ output: pdf_document
 ```{r}
 library(OTools)
 library(xlsx)
+library(nlme)
+library(car)
+library(emmeans)
 ```
 
 # Find the relevant files
@@ -19,20 +22,19 @@ pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
 metab.files=setdiff(resp.files,pcrit.files)
 blank.files=grep("blank",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(metab.files,blank.files)
-rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt",rmr.files)]
-rmr.files=rmr.files[!grepl("\\(1\\).txt",basename(rmr.files))]
+rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt|\\(1\\).txt",rmr.files)]
 ```
 
 
 # Reading in the data log xlsx file
 ```{r}
-data.log=read.xlsx("Muus Data Log.xlsx",sheetIndex = 1)
+data.log=read.csv("Muus_Data_Log.csv")
 ```
 
 # Running the RMR data analysis
 First I am going to make a object to put the RMR data into
 ```{r}
-routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),mass=as.numeric(),pco2=as.numeric(),rmr=as.numeric())
+routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo=as.character(),mass=as.numeric(),pco2=as.numeric(),day=as.numeric(),rmr=as.numeric())
 ```
 
 
@@ -60,37 +62,41 @@ guess=which.min(adist(basename(filename),data.log$File.name))
       mass=10
     }
     print("calculating rmr")
-    resp.mean=mean(resp.open(resp[resp$times>3600,],flow.rate=flow*1000,weight=mass)$resp)
+    resp.mean=mean(resp.open(resp[resp$times>3600,],flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
     print("writing data to object")
     routine[column.count,1]=basename(filename)
     routine[column.count,2]=data.log$File.name[guess]
-    routine[column.count,3]=mass
+    routine[column.count,3]=data.log$octo1[guess]
+    routine[column.count,4]=mass
 
     if(length(grep("1800",filename))>0){
-     routine[column.count,4]=1800
+     routine[column.count,5]=1800
     }
     if(length(grep("1000",filename))>0){
-      routine[column.count,4]=1000
+      routine[column.count,5]=1000
     }
-    routine[column.count,5]=resp.mean
+    routine[column.count,6]=data.log$day[guess]
+    routine[column.count,7]=resp.mean
     column.count=column.count+1
     if(sum(is.na(resp$O23))<10){
       print("found second respirometer")
       flow=as.numeric(data.log$Flow.rate.2[guess])
       mass=as.numeric(data.log$Mass.2[guess])
-      resp.mean=mean(resp.open(resp[resp$times>3600,],inflow=3,outflow=4,flow.rate=flow*1000,weight=mass)$resp)
+      resp.mean=mean(resp.open(resp[resp$times>3600,],inflow=3,outflow=4,flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
       print("writing data to object")
       routine[column.count,1]=basename(filename)
       routine[column.count,2]=data.log$File.name[guess]
-      routine[column.count,3]=mass
+      routine[column.count,3]=data.log$octo2[guess]
+      routine[column.count,4]=mass
   
       if(length(grep("1800",filename))>0){
-       routine[column.count,4]=1800
+       routine[column.count,5]=1800
       }
       if(length(grep("1000",filename))>0){
-        routine[column.count,4]=1000
+        routine[column.count,5]=1000
       }
-      routine[column.count,5]=resp.mean
+      routine[column.count,6]=data.log$day[guess]
+      routine[column.count,7]=resp.mean
       column.count=column.count+1
     }
   print(paste("end of file ", basename(filename)," (loop",i,")",sep=""))
@@ -102,8 +108,39 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 
 
 ```{r}
-write.xlsx(routine,"RMR_Results.xlsx")
+write.csv(routine,"RMR_Results.csv")
 ```
+
+# Plotting Something
+```{r}
+plot(rmr~mass,data=routine,log="xy")
+```
+
+
+# Running linear effects model
+
+## setting pCO2 to factor class:
+```{r short_input}
+routine$pco2=as.factor(routine$pco2)
+```
+
+## Next I set orthogonal contrasts:
+```{r short_contrast}
+contrasts(routine$pco2)=contr.poly(2) 
+```
+
+## Running the linear mixed effects model and ANOVA using type III sum of squares:
+```{r linear mixed effects model}
+routine.lme=lme(rmr~mass*pco2*day,random=~1|octo,
+              correlation=corAR1(form=~day|octo),
+              data=routine)
+Anova(routine.lme,type="III")
+```
+
+```{r}
+emmeans(routine.lme,~day*mass*pco2)
+```
+
 
 # Running blanks
 
