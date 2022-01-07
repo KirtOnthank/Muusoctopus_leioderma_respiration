@@ -20,6 +20,7 @@ metab.files=setdiff(resp.files,pcrit.files)
 blank.files=grep("blank",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(metab.files,blank.files)
 rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt",rmr.files)]
+rmr.files=rmr.files[!grepl("\\(1\\).txt",basename(rmr.files))]
 ```
 
 
