@@ -12,6 +12,7 @@ library(xlsx)
 library(nlme)
 library(car)
 library(emmeans)
+library(respirometry)
 ```
 
 # Find the relevant files
@@ -20,9 +21,10 @@ files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
 pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
 metab.files=setdiff(resp.files,pcrit.files)
-blank.files=grep("blank",resp.files,value=T,ignore.case=T)
+blank.files=grep("blank_only",resp.files,value=T,ignore.case=T)
 rmr.files=setdiff(metab.files,blank.files)
 rmr.files=rmr.files[!grepl("-ch2.txt|-ch3.txt|-ch4.txt|\\(1\\).txt",rmr.files)]
+rmr.files=rmr.files[!duplicated(basename(rmr.files))]
 ```
 
 
@@ -38,13 +40,30 @@ routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo
 ```
 
 
+filename match check
+```{r}
+file_check=as.character()
+for (i in 1:length(rmr.files)){
+  filename=rmr.files[i]
+  guess=which.min(adist(basename(filename),data.log$File.name))
+  file_check[i]=data.log$File.name[guess]
+}
+
+write.csv(cbind(basename(rmr.files),file_check),file = "filecheck.csv")
+
+i=27
+cbind(t(adist(basename(rmr.files[i]),data.log$File.name)),basename(rmr.files),basename(rmr.files)[i])
+
+sum(is.na(resp$O23))<10&!grepl("blank",filename)
+```
+
 
 ```{r}
 column.count=1
 for (i in 1:length(rmr.files)){
   filename=rmr.files[i]
   print(paste("starting file ", basename(filename)," (loop",i,")",sep=""))
-  if(length(grep("Group 4|presens|ch\\d\\.txt",filename))>0){
+  if(length(grep("Group 4|presens|ch\\d\\.txt",basename(filename)))>0){
     resp=read.presens(filename)
   }else{
     resp=read.pyro(filename)
@@ -62,7 +81,7 @@ guess=which.min(adist(basename(filename),data.log$File.name))
       mass=10
     }
     print("calculating rmr")
-    resp.mean=mean(resp.open(resp[resp$times>3600,],flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
+    resp.mean=mean(resp.open(resp[resp$times>3600*3,],flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
     print("writing data to object")
     routine[column.count,1]=basename(filename)
     routine[column.count,2]=data.log$File.name[guess]
@@ -78,7 +97,7 @@ guess=which.min(adist(basename(filename),data.log$File.name))
     routine[column.count,6]=data.log$day[guess]
     routine[column.count,7]=resp.mean
     column.count=column.count+1
-    if(sum(is.na(resp$O23))<10){
+    if(sum(is.na(resp$O23))<10&!grepl("blank",filename)){
       print("found second respirometer")
       flow=as.numeric(data.log$Flow.rate.2[guess])
       mass=as.numeric(data.log$Mass.2[guess])
@@ -132,7 +151,7 @@ contrasts(routine$pco2)=contr.poly(2)
 ## Running the linear mixed effects model and ANOVA using type III sum of squares:
 ```{r linear mixed effects model}
 routine.lme=lme(rmr~mass*pco2*day,random=~1|octo,
-              correlation=corAR1(form=~day|octo),
+#             correlation=corAR1(form=~day|octo),
               data=routine)
 Anova(routine.lme,type="III")
 ```
@@ -149,7 +168,41 @@ blank.files=grep("blank",resp.files,value=T,ignore.case=T)
 ```
 
 
+# Pcrit analysis
+
+```{r}
+pcrit.files=pcrit.files[!duplicated(basename(pcrit.files))]
+write.csv(basename(pcrit.files),file = "pcrit_log.csv")
+```
+
+
+```{r}
+
+
+pcrit.raw=read.pyro(pcrit.files[5])
+plot(pcrit.raw$O21~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=basename(pcrit.files[1]))
+abline(v=seq(from=0,to=100000,by=1000),col="grey")
 
 
 
+```
+```{r}
+```
+
+
+```{r}
+muus.resp=resp.closed(pcrit.raw,volume=.025,weight=25,smooth="loess",channel=2,smooth.span=0.1)
+plot_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)],MR=2.00,avg_top_n=3)
+
+calc_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)], MR = 2.6)
+
+```
+
+
+
+
+```{r}
+library(remotes)
+install_github("KirtOnthank/OTools")
+```
 
