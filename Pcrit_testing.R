@@ -3,9 +3,13 @@ library(OTools)
 #library(dplyr)
 
 muus.pc=read.pyro("Tbocto 1000 pcrti tank 1 and 2 8-11-21.txt")
+muus.resp=resp.closed(muus.pc[50:nrow(muus.pc),],volume=10.2,weight=791,smooth="loess",channel = 1,smooth.n=60)
+plot_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)])
+calc_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)])
+
 
 plot(O21~times,data=muus.pc,type="l",ylim=c(0,280))
-points(muus.pc$O22,col="red",type="l")
+points(muus.pc$O22~muus.pc$times,col="red",type="l")
 
 ##to trim to usable data
 muus.pc=muus.pc[50:nrow(muus.pc),]
