@@ -9,6 +9,8 @@ output: pdf_document
 library(OTools)
 library(respirometry)
 library(knitr)
+library(nlme)
+library(car)
 ```
 
 ```{r}
@@ -60,9 +62,18 @@ pcrit.working=
     pcrit.raw$times>start&
     pcrit.raw$times<stop,
   ]
+vol=pcrit.log$vol[guess]
+drop.time=round((stop-start)/3600,1)
+O2.drop=round(diff(range(pcrit.working[,3+ch])),1)
+rough.mo2=round((O2.drop*vol)/mass/drop.time,1)
 
 plot(pcrit.raw[,3+ch]~pcrit.raw$times,type="l",main=basename(filename))
 points(pcrit.working[,3+ch]~pcrit.working$times,type="l",col="red")
+mtext(paste("mass=",mass),side=3,adj=1,line=-1)
+mtext(paste0("resp vol=",vol),side=3,adj=1,line=-2)
+mtext(paste0("drop time=",drop.time," hr"),side=3,adj=1,line=-3)
+mtext(paste0("O2 drop=",O2.drop),side=3,adj=1,line=-4)
+mtext(paste0("rough mean MO2=",rough.mo2),side=3,adj=1,line=-5)
 
 pcrit.resp=resp.closed(pcrit.working,volume=pcrit.log$vol[guess],
             weight=mass,smooth="loess",channel=ch,smooth.span = 0.2)
@@ -154,4 +165,49 @@ if(!is.na(pcrit.log$ch2[guess])){
 
 
 ```
+```{r}
+pcrits=pcrits[complete.cases(pcrits),]
+pcrits=pcrits[pcrits$filename!="GR1 Muus1000 pcrit 7-21-21.txt",]
+```
+
+
+```{r}
+plot(pcrit~mass,data=pcrits)
+```
+
+
+```{r}
+aggregate(pcrit~pco2+day,data=pcrits,FUN="length")
+```
+
+## setting pCO2 to factor class:
+```{r short_input}
+pcrits$pco2=as.factor(pcrits$pco2)
+```
+
+## Next I set orthogonal contrasts:
+```{r short_contrast}
+contrasts(pcrits$pco2)=contr.poly(2) 
+```
+
+```{r}
+aggregate(pcrit~day+octo,data=pcrits,FUN="length")
+```
+
+
+## Running the linear mixed effects model and ANOVA using type III sum of squares:
+```{r linear mixed effects model}
+pcrits.lme=lme(pcrit~mass+pco2+day,random=~1|octo,
+             correlation=corAR1(form=~day|octo),
+              data=pcrits,na.action=na.omit)
+
+Anova(pcrits.lme,type="III")
+```
+## Plotting the lme results
+
+
+```{r}
+boxplot(pcrit~day+pco2,data=pcrits,range=0)
+```
+
 

@@ -2,7 +2,9 @@
 title: "Muusoctopus leioderma respiration"
 author: "Lloyd Trueblood and Kirt Onthank"
 date: "9/23/2021"
-output: pdf_document
+output:
+  pdf_document: default
+  word_document: default
 ---
 
 # Reading in libraries
@@ -13,6 +15,7 @@ library(nlme)
 library(car)
 library(emmeans)
 library(respirometry)
+library(knitr)
 ```
 
 # Find the relevant files
@@ -43,22 +46,24 @@ routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo
 filename match check
 ```{r}
 file_check=as.character()
+score=as.numeric()
 for (i in 1:length(rmr.files)){
   filename=rmr.files[i]
   guess=which.min(adist(basename(filename),data.log$File.name))
   file_check[i]=data.log$File.name[guess]
+  score[i]=min(adist(basename(filename),data.log$File.name))
 }
 
-write.csv(cbind(basename(rmr.files),file_check),file = "filecheck.csv")
+write.csv(cbind(basename(rmr.files),file_check,score),file = "filecheck.csv")
 
-i=27
-cbind(t(adist(basename(rmr.files[i]),data.log$File.name)),basename(rmr.files),basename(rmr.files)[i])
+#i=27
+#cbind(t(adist(basename(rmr.files[i]),data.log$File.name)),basename(rmr.files),basename(rmr.files)[i])
 
-sum(is.na(resp$O23))<10&!grepl("blank",filename)
+#sum(is.na(resp$O23))<10&!grepl("blank",filename)
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 column.count=1
 for (i in 1:length(rmr.files)){
   filename=rmr.files[i]
@@ -126,17 +131,23 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 write.csv(routine,"RMR_Results.csv")
 ```
 
-# Plotting Something
 ```{r}
-plot(rmr~mass,data=routine,log="xy")
+routine=read.csv("RMR_Results.csv")
 ```
 
 
 # Running linear effects model
+
+# log-log transformation
+```{r}
+routine$mass.log=log(routine$mass)
+routine$rmr.log=log(routine$rmr)
+```
+
 
 ## setting pCO2 to factor class:
 ```{r short_input}
@@ -150,59 +161,106 @@ contrasts(routine$pco2)=contr.poly(2)
 
 ## Running the linear mixed effects model and ANOVA using type III sum of squares:
 ```{r linear mixed effects model}
-routine.lme=lme(rmr~mass*pco2*day,random=~1|octo,
-#             correlation=corAR1(form=~day|octo),
-              data=routine)
-Anova(routine.lme,type="III")
+routine.lme=lme(rmr.log~mass.log+pco2+day,random=~1|octo,
+             correlation=corAR1(form=~day|octo),
+              data=routine[routine$octo!="2-1",])
+routine.anova=Anova(routine.lme,type="III")
+routine.anova
 ```
 
 ```{r}
-emmeans(routine.lme,~day*mass*pco2)
+rmr.lme.table=cbind(
+  c("Mass","pCO2","Day"),
+  round(routine.anova$Chisq[2:4],2),
+  routine.anova$Df[2:4],
+  round(routine.anova$`Pr(>Chisq)`[2:4],5)
+)
+colnames(rmr.lme.table)=c("Factor","Chi-square", "DF", "p-value")
+
+kable(rmr.lme.table)
 ```
-
-
-# Running blanks
-
-```{r}
-blank.files=grep("blank",resp.files,value=T,ignore.case=T)
-```
-
-
-# Pcrit analysis
-
-```{r}
-pcrit.files=pcrit.files[!duplicated(basename(pcrit.files))]
-write.csv(basename(pcrit.files),file = "pcrit_log.csv")
-```
-
-
-```{r}
-
-
-pcrit.raw=read.pyro(pcrit.files[5])
-plot(pcrit.raw$O21~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=basename(pcrit.files[1]))
-abline(v=seq(from=0,to=100000,by=1000),col="grey")
-
-
-
-```
-```{r}
-```
-
-
-```{r}
-muus.resp=resp.closed(pcrit.raw,volume=.025,weight=25,smooth="loess",channel=2,smooth.span=0.1)
-plot_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)],MR=2.00,avg_top_n=3)
-
-calc_pcrit(muus.resp$po2[complete.cases(muus.resp)],muus.resp$resp[complete.cases(muus.resp)], MR = 2.6)
-
-```
-
 
 
 
 ```{r}
-library(remotes)
-install_github("KirtOnthank/OTools")
+predictions=data.frame(
+  day=c(1,7,1,7),
+  mass.log=log(rep(log(25.6),4)),
+  pco2=as.factor(c(1000,1000,1800,1800))
+)
+
+exp(predict(routine.lme,newdata=predictions,level=0))
+
 ```
+
+
+# Regressions
+```{r}
+#reg1.1800=nls(rmr~a*mass^b,data=routine[routine$pco2==1800&routine$day==1,],start=list(a=10,b=-0.7))
+seq1.1800=seq(from=min(routine$mass.log[routine$pco2==1800]),
+              to=max(routine$mass.log[routine$pco2==1800]),
+              length.out=100)
+
+df1.1800=data.frame(
+  day=rep(1,100),
+  mass.log=seq1.1800,
+  pco2=as.factor(rep(1800,100))
+)
+pred1.1800= predict(routine.lme,newdata = df1.1800,level=0)
+
+#reg1.1000=nls(rmr~a*mass^b,data=routine[routine$pco2==1000&routine$day==1,],start=list(a=10,b=-0.7))
+seq1.1000=seq(from=min(routine$mass.log[routine$pco2==1000]),
+              to=max(routine$mass.log[routine$pco2==1000]),
+              length.out=100)
+
+df1.1000=data.frame(
+  day=rep(1,100),
+  mass.log=seq1.1000,
+  pco2=as.factor(rep(1000,100))
+)
+
+pred1.1000=predict(routine.lme,newdata = df1.1000,level=0)
+
+#reg7.1800=nls(rmr~a*mass^b,data=routine[routine$pco2==1800&routine$day==7,],start=list(a=10,b=-0.7))
+seq7.1800=seq(from=min(routine$mass.log[routine$pco2==1800]),
+              to=max(routine$mass.log[routine$pco2==1800]),
+              length.out=100)
+
+df7.1800=data.frame(
+  day=rep(7,100),
+  mass.log=seq7.1800,
+  pco2=as.factor(rep(1800,100))
+)
+
+pred7.1800=predict(routine.lme,newdata = df7.1800,level=0)
+
+#reg7.1000=nls(rmr~a*mass^b,data=routine[routine$pco2==1000&routine$day==7,],start=list(a=10,b=-0.7))
+seq7.1000=seq(from=min(routine$mass.log[routine$pco2==1000]),
+              to=max(routine$mass.log[routine$pco2==1000]),
+              length.out=100)
+
+df7.1000=data.frame(
+  day=rep(77,100),
+  mass.log=seq7.1000,
+  pco2=as.factor(rep(1000,100))
+)
+
+pred7.1000=predict(routine.lme,newdata = df7.1000,level=0)
+
+```
+
+```{r}
+plot(rmr~mass,data=routine[routine$octo!="2-1",],log="xy")
+points(rmr~mass,data=routine[routine$pco2==1000&routine$day==1&routine$octo!="2-1",],pch=21,bg="white",col="blue")
+points(rmr~mass,data=routine[routine$pco2==1000&routine$day==7&routine$octo!="2-1",],pch=21,bg="blue")
+points(rmr~mass,data=routine[routine$pco2==1800&routine$day==7&routine$octo!="2-1",],pch=21,bg="red")
+points(rmr~mass,data=routine[routine$pco2==1800&routine$day==1&routine$octo!="2-1",],pch=21,bg="white",col="red")
+lines(exp(seq1.1800),exp(pred1.1800),col="red",lwd=2,lty=2)
+lines(exp(seq1.1000),exp(pred1.1000),col="blue",lwd=2,lty=2)
+lines(exp(seq7.1800),exp(pred7.1800),col="red",lwd=2,lty=1)
+lines(exp(seq7.1000),exp(pred7.1000),col="blue",lwd=2,lty=1)
+
+```
+
+
 
