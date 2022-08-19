@@ -63,7 +63,7 @@ write.csv(cbind(basename(rmr.files),file_check,score),file = "filecheck.csv")
 ```
 
 
-```{r, eval=FALSE}
+```{r}
 column.count=1
 for (i in 1:length(rmr.files)){
   filename=rmr.files[i]
@@ -131,7 +131,7 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 ```
 
 
-```{r, eval=FALSE}
+```{r}
 write.csv(routine,"RMR_Results.csv")
 ```
 
