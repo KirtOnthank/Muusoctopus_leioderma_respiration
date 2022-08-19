@@ -1,0 +1,161 @@
+---
+title: "OA Treatment Summary"
+author: "Kirt L Onthank"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+library(knitr)
+```
+
+```{r}
+RMR=read.csv(file="RMR_Results.csv")
+```
+
+```{r}
+dates=strptime(gsub(".*([78]-\\d+-21).*","\\1",RMR$filename),format="%m-%d-%y")
+```
+
+```{r}
+OA=read.csv("OA_Data_Sheet.csv")
+OA$Date=strptime(OA$Date,format="%Y/%m/%d")
+OA$Date=as.Date(OA$Date)
+```
+
+```{r}
+octos=unique(RMR$octo)
+```
+
+```{r}
+OA_Summary=data.frame(octo=as.character(rep(NA,17)),
+                      start.date=rep(as.Date(OA$Date[1]),17),
+                      end.date=rep(as.Date(OA$Date[1]),17),
+                      treat=as.numeric(rep(NA,17)),
+                      pco2=as.numeric(rep(NA,17)),
+                      pco2.sd=as.numeric(rep(NA,17)),
+                      ph=as.numeric(rep(NA,17)),
+                      ph.sd=as.numeric(rep(NA,17)),
+                      alk=as.numeric(rep(NA,17)),
+                      alk.sd=as.numeric(rep(NA,17)),
+                      salinity=as.numeric(rep(NA,17))
+                      ,salinity.sd=as.numeric(rep(NA,17))
+                      )
+
+
+```
+
+```{r}
+
+for (i in 1:length(octos)){
+  OA_Summary$octo[i]=octos[i]
+  OA_Summary$start.date[i]=
+    as.Date(min(dates[RMR$octo==octos[i]]))
+  OA_Summary$end.date[i]=
+    as.Date(max(dates[RMR$octo==octos[i]]))
+  if(OA_Summary$end.date[i]==OA_Summary$start.date[i]){
+    OA_Summary$start.date[i]=OA_Summary$end.date[i]-6
+  }
+  OA_Summary$treat[i]=
+    RMR$pco2[RMR$octo==octos[i]][1]
+  group=
+    as.numeric(gsub("(\\d+)\\-\\d+","\\1",octos[i]))
+  if (OA_Summary$treat[i]==1000){
+    tank=group
+  }
+  if (OA_Summary$treat[i]==1800){
+    tank=group+4 
+  }
+  if (grepl("5",octos[i])){
+    tank=
+      as.numeric(gsub("5-(\\d)","\\1",octos[i]))
+  }
+  if (octos[i]=="5-5"){
+    tank=5
+  }
+  OA_Summary$pco2[i]=
+    round(mean(OA[,tank+2][OA$Variable=="pCO2"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T))
+  OA_Summary$pco2.sd[i]=
+    round(sd(OA[,tank+2][OA$Variable=="pCO2"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T))
+  OA_Summary$ph[i]=
+    round(mean(OA[,tank+2][OA$Variable=="pH"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T),3)
+  OA_Summary$ph.sd[i]=
+    round(sd(OA[,tank+2][OA$Variable=="pH"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T),3)
+  OA_Summary$alk[i]=
+   round(mean(OA[,tank+2][OA$Variable=="Alkalinity"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T)*1000000)
+  OA_Summary$alk.sd[i]=
+    round(sd(OA[,tank+2][OA$Variable=="Alkalinity"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T)*1000000)
+  OA_Summary$salinity[i]=
+    round(mean(OA[,tank+2][OA$Variable=="Salinity"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T),1)
+  OA_Summary$salinity.sd[i]=
+    round(sd(OA[,tank+2][OA$Variable=="Salinity"&
+          OA$Date>=OA_Summary$start.date[i]&
+          OA$Date<=OA_Summary$end.date[i]],
+          na.rm=T),1)
+
+  }
+
+```
+
+
+```{r}
+kable(OA_Summary,align="c")
+```
+
+
+```{r}
+
+
+treatment.sum=data.frame(
+  Treatment=c("Control","Elevated CO~2~"),
+  pCO2=paste0(round(aggregate(pco2~treat,data=OA_Summary,FUN="mean")$pco2),"±",
+  c(round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1000]^2,na.rm=T))),
+    round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1800]^2,na.rm=T))))
+  ),
+#  round(aggregate(pco2~treat,data=OA_Summary,FUN="sd")$pco2)),
+  pH=paste0(round(aggregate(ph~treat,data=OA_Summary,FUN="mean")$ph,3),"±",
+  c(round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1000]^2,na.rm=T)),3),
+    round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1800]^2,na.rm=T)),3))
+  ),
+  Alkalinity=paste0(round(aggregate(alk~treat,data=OA_Summary,FUN="mean")$alk),"±",
+  c(round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1000]^2,na.rm=T)),0),
+    round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1800]^2,na.rm=T)),0))
+  ),
+  Salinity=paste0(round(aggregate(salinity~treat,data=OA_Summary,FUN="mean")$salinity,1),"±",
+  c(round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1000]^2,na.rm=T)),1),
+    round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1800]^2,na.rm=T)),1))
+  )
+)
+
+colnames(treatment.sum)[2]="pCO~2~ ($\\mu$atm)"
+colnames(treatment.sum)[4]="Alkalinity ($\\mu$mol kg^-1^)"
+colnames(treatment.sum)[5]="Salinity (PSU)"
+
+
+
+```
+
+```{r}
+kable(treatment.sum,align="c")
+```
