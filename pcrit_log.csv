@@ -2,8 +2,8 @@ filename,ch1,ch2,vol,pco2,day,trim_left,trim_left2,trim_left3,trim_left4,trim_ri
 "Gr1 Muus 1000-2 pcrit 7-27-21 B.txt",1,,1,1000,1,0,0,,,0,0,,,1-2,,"GR1 Muus1000 7day-7-26-21.txt"
 "Gr1 Muus 1000-2 pcrit 7-27-21.txt",1,,1,1000,1,0,0,,,0,0,,,1-2,,"GR1 Muus1000 7day-7-26-21.txt"
 "Gr1 Muus 1800-2 pcrit 25 ml jar 7-29-21 ch2 blank.txt",1,,0.025,1800,1,2900,,,,200,,,,1-3,,"Gr1 Muus 1800-2  7day-8-2-21.txt"
-"Gr1 Muus 1800-2 pcrit 7-28-21.txt",1,,1,1800,1,3000,3000,,,4000,4000,,,1-3,,"Gr1 Muus 1800-2  7day-8-2-21.txt"
-"GR1 Muus 1800-2 pcrit day7 8-3-21.txt",1,,1,1800,7,0,0,,,0,0,,,1-3,,"Gr1 Muus 1800-2  7day-8-2-21.txt"
+"Gr1 Muus 1800-2 pcrit 7-28-21.txt",1,,0.12,1800,1,3000,3000,,,4000,4000,,,1-3,,"Gr1 Muus 1800-2  7day-8-2-21.txt"
+"GR1 Muus 1800-2 pcrit day7 8-3-21.txt",1,,0.12,1800,7,0,0,,,0,0,,,1-3,,"Gr1 Muus 1800-2  7day-8-2-21.txt"
 "GR1 Muus1000 7day-7-26-21.txt",1,,1,1000,7,32000,32000,,,20000,20000,,,1-2,,"GR1 Muus1000 7day-7-26-21.txt"
 "GR1 Muus1000 pcrit 7-21-21.txt",1,,1,1000,1,100,100,,,300,300,,,1-2,,"GR1 Muus1000 7-20-21.txt"
 "GR1 Muus1800 7day-pcrit 7-20-21.txt",2,,1,1800,7,1000,1000,,,1000,1000,,,1-1,,"GR1 Muus1800 7day-7-19-21.txt"
@@ -18,20 +18,20 @@ filename,ch1,ch2,vol,pco2,day,trim_left,trim_left2,trim_left3,trim_left4,trim_ri
 "gr3 muus 1800 7day Pcrit 7-20-21.txt",1,,1,1800,7,0,0,,,0,200,,,3-1,,"gr3 muus 1800 7day-7-19-21.txt"
 "gr3 muus 1800 pcrit 7-13-21.txt",1,,1,1800,1,0,0,,,0,0,,,3-1,,"gr3 muus 1800 7-12-21.txt"
 "Gr3 Muus 1800-2 pcrit 07-28-21.txt",1,,1,1800,1,500,0,,,0,0,,,3-3,,"gr3 muus 1800 -2 7-27-21.txt"
-"Gr3 Muus 1800-2 pcrit 08-03-21.txt",1,,1,1800,1,200,0,,,100,100,,,3-3,,"gr3 muus 1800 -2 day7 8-02-21.txt"
+"Gr3 Muus 1800-2 pcrit 08-03-21.txt",1,,1,1800,7,200,0,,,100,100,,,3-3,,"gr3 muus 1800 -2 day7 8-02-21.txt"
 "Gr3 Muus1000-2 7 day pcrit 7-27-21.txt",1,,1,1000,7,0,0,,,0,0,,,3-2,,"gr3 muus 1000-2 7day 7-26-21.txt"
-GR4MUUS1000-2Pcrit-7-26-21-ch1.txt,1,,1,1000,1,100,0,,,0,0,,,4-2,,
+GR4MUUS1000-2Pcrit-7-26-21-ch1.txt,1,,1,1000,7,100,0,,,0,0,,,4-2,,
 GR4MUUS1000Pcrit-7-21-21-ch1.txt,1,,1,1000,1,500,500,,,4400,4400,,,4-2,,GR4MUUS1000-7-21-21-ch1.txt
 GR4MUUS1800-7dayPcrit-7-20-21-ch1.txt,1,,1,1800,7,0,1000,,,0,0,,,4-1,,GR4MUUS1800-7day-7-19-21.txt
 GR4MUUS1800-2-7dayPcrit-8-3-21-ch1.txt,1,,1,1800,7,0,0,,,14000,14000,,,4-3,,GR4MUUS1800-2-7day-8-2-21.txt
 GR4MUUS1800-2Pcrit-7-28-21-ch1.txt,1,,1,1800,1,200,200,,,100,100,,,4-3,,
 GR4MUUS1800Pcrit-7-13-21-ch1.txt,1,,1,1800,1,8000,8000,,,0,0,,,4-1,,GR4MUUS18007.12.21MUUS-ch1
 "tbocto 1000 pcrit tank 1 and 2 day 7 8-19-21.txt",1,3,1,1000,7,8000,8000,0,0,5500,5500,18000,18000,5-1,5-2,"tbocto 1000 rmr tank 1 and 2 8-10-21 1 ch 1-2 2 ch3-4.txt"
-"tbocto 1000 pcrit tank 3 and 4 8-11-21-ch1.txt",1,3,1,1000,1,500,500,200,200,200,200,14600,14600,5-3,5-4,
+"tbocto 1000 pcrit tank 3 and 4 8-11-21-ch1.txt",1,3,1,1000,1,500,500,200,200,200,200,14800,14800,5-3,5-4,
 "tbocto 1000 pcrit tank 3 and 4 day 7 8-19-21-ch1.txt",1,3,1,1000,7,0,0,0,0,200,0,200,200,5-3,5-4,"tbocto 1000 rmr tank 3 and 4 day 7 8-18-21-ch1.txt"
 "Tbocto 1000 pcrti tank 1 and 2 8-11-21.txt",1,3,1,1000,1,1000,1000,200,200,0,0,7000,7000,5-1,5-2,"tbocto 1000 rmr tank 1 and 2 8-10-21 1 ch 1-2 2 ch3-4.txt"
-"gr2muus1000 pcrit 7-21-21.txt",1,,1,1000,1,100,0,,,0,0,,,2-2,,"gr2muus1000 7-20-21.txt"
-"gr2muus1000-2 pcrit 7-26-21.txt",1,,1,1000,1,0,0,,,0,0,,,2-2,,"gr2muus1000-2 7-26-21.txt"
+"gr2muus1000 pcrit 7-21-21.txt",2,,1,1000,1,100,0,,,0,0,,,2-2,,"gr2muus1000 7-20-21.txt"
+"gr2muus1000-2 pcrit 7-26-21.txt",1,,1,1000,7,0,0,,,0,0,,,2-2,,"gr2muus1000-2 7-26-21.txt"
 GR2MUUS18007dayPcrit-7-20-21.txt,2,,1,1800,7,0,0,,,0,0,,,2-1,,"gr2muus1800 7day 7-19-21.txt"
 gr2MUUS1800-2pcritday7.8-3-21.txt,1,,1,1800,7,0,0,,,5000,5000,,,2-3,,"gr2muus1800-2 day7 8-2-21.txt"
-"tbocto 1800 pcrit day 7 tank 10 blank ch 3 4 8-20-21-ch1.txt",1,4,1,1800,1,200,200,0,0,0,0,0,0,5-3,5-4,
+"tbocto 1800 pcrit day 7 tank 10 blank ch 3 4 8-20-21-ch1.txt",1,,1,1800,1,200,200,,,0,0,,,5-5,,unknown
