@@ -41,3 +41,11 @@ vignettes/*.pdf
 # Lock files
 .~lock.
 .sync*
+=======
+# Lock and sync files
+.~lock.*
+.sync*
+~$*
+
+Backups
+Backups/

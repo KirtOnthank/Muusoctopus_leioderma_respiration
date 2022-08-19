@@ -1,0 +1,207 @@
+---
+title: "Pcrit Run Evaluation"
+author: "Kirt L Onthank"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+library(OTools)
+library(respirometry)
+```
+
+```{r}
+files=list.files(recursive=T)
+resp.files=grep(".txt",files,value=T)
+pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
+pcrit.files=pcrit.files[!duplicated(basename(pcrit.files))]
+
+pcrit.files.read=pcrit.files[!grepl("ch2.txt|ch3.txt|ch4.txt|\\(1\\).txt",pcrit.files)]
+write.csv(basename(pcrit.files.read),file = "pcrit_read_log.csv")
+pcrit.files.read
+```
+
+```{r warning=FALSE}
+
+for (i in 1:length(pcrit.files.read)){
+    if(length(grep("Group 4|presens|ch\\d\\.txt",pcrit.files.read[i]))>0){
+    pcrit.raw=read.presens(pcrit.files.read[i])
+  }else{
+    pcrit.raw=read.pyro(pcrit.files.read[i])
+  }
+  plot(pcrit.raw$O21~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=basename(pcrit.files.read[i]))
+  abline(v=seq(from=0,to=100000,by=1000),col="grey")
+  if(sum(is.na(pcrit.raw$O22))<10){
+      plot(pcrit.raw$O22~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=paste(2,basename(pcrit.files.read[i])))
+      abline(v=seq(from=0,to=100000,by=1000),col="grey")
+  }
+    if(sum(is.na(pcrit.raw$O23))<10){
+      plot(pcrit.raw$O23~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=paste(3,basename(pcrit.files.read[i])))
+      abline(v=seq(from=0,to=100000,by=1000),col="grey")
+  }
+  if(sum(is.na(pcrit.raw$O24))<10){
+      plot(pcrit.raw$O24~pcrit.raw$times,type="l",axes=F,ylab="",xlab="",main=paste(4,basename(pcrit.files.read[i])))
+      abline(v=seq(from=0,to=100000,by=1000),col="grey")
+  }
+
+  
+}
+
+```
+
+```{r}
+pcrit.log=read.csv("pcrit_log.csv")
+```
+
+filecheck
+
+```{r}
+pcrit.filecheck=as.character()
+for (i in 1:length(pcrit.files.read)){
+  filename=pcrit.files.read[i]  
+  guess=which.min(adist(basename(filename),pcrit.log$filename))  
+  pcrit.filecheck[i]=pcrit.log$filename[guess]  
+}
+
+write.csv(cbind(pcrit.files.read,pcrit.filecheck),file="pcrit_filecheck.csv")
+```
+
+file match spot check
+
+```{r}
+filename=pcrit.files.read[24]  
+
+write.csv(
+cbind(
+  t(adist(basename(filename),pcrit.log$filename)),
+  pcrit.log$filename,
+  rep(filename,nrow(pcrit.log))
+), file="pcrit_spotcheck.csv"
+)
+```
+
+```{r}
+pcrits=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo=as.character(),mass=as.numeric(),pco2=as.numeric(),day=as.numeric(),rmr=as.numeric(),pcrit=as.numeric())
+
+```
+
+
+```{r}
+co=1
+
+for (i in 1:length(pcrit.files.read)){
+  filename=pcrit.files.read[i]  
+
+  if(length(grep("Group 4|presens|ch\\d\\.txt",basename(filename)))>0){
+    pcrit.raw=read.presens(filename)
+  }else{
+    pcrit.raw=read.pyro(filename)
+  }
+
+guess=which.min(adist(basename(filename),pcrit.log$filename))  
+ch=pcrit.log$ch1[guess]
+octo=pcrit.log$octo1[guess]
+start=pcrit.log[guess,6+ch]
+stop=max(pcrit.raw$times)-pcrit.log[guess,10+ch]
+mass=mean(routine$mass[routine$octo==octo])
+rmr=mean(routine$rmr[routine$octo==octo])
+  
+pcrit.working=
+  pcrit.raw[
+    pcrit.raw$times>start&
+    pcrit.raw$times<stop,
+  ]
+
+plot(pcrit.raw[,3+ch]~pcrit.raw$times,type="l",main=basename(filename))
+points(pcrit.working[,3+ch]~pcrit.working$times,type="l",col="red")
+
+pcrit.resp=resp.closed(pcrit.working,volume=pcrit.log$vol[guess],
+            weight=mass,smooth="loess",channel=ch,smooth.span = 0.2)
+
+pcrit.bin=aggregate(pcrit.resp$resp~round(pcrit.resp$po2,1),FUN="mean")
+colnames(pcrit.bin)=c("po2","resp")
+
+if(max(pcrit.bin$resp)>rmr){
+  plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3,MR=rmr)   
+}else{
+  plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3)
+}
+
+
+pcrits[co,1]=basename(filename)
+pcrits[co,2]=pcrit.log$filename[guess]
+pcrits[co,3]=octo
+pcrits[co,4]=mass
+pcrits[co,5]=pcrit.log$pco2[guess]
+pcrits[co,6]=pcrit.log$day[guess]
+pcrits[co,7]=rmr
+if (min(pcrit.working[,3+ch])<50){
+  if(max(pcrit.bin$resp)>rmr){
+  pcrits[co,8]=as.numeric(calc_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3,MR=rmr)[1])
+  }else{
+    pcrits[co,8]=as.numeric(calc_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3)[1])
+  }
+}else{
+  pcrits[co,8]=NA
+}
+co=co+1
+
+if(!is.na(pcrit.log$ch2[guess])){
+  ch=pcrit.log$ch2[guess]
+  octo=pcrit.log$octo2[guess]
+  start=pcrit.log[guess,6+ch]
+  stop=max(pcrit.raw$times)-pcrit.log[guess,10+ch]
+  mass=mean(routine$mass[routine$octo==octo])
+  rmr=mean(routine$rmr[routine$octo==octo])
+  
+  pcrit.working=
+    pcrit.raw[
+      pcrit.raw$times>start&
+      pcrit.raw$times<stop,
+    ]
+
+  plot(pcrit.raw[,3+ch]~pcrit.raw$times,type="l",main=basename(filename))
+  points(pcrit.working[,3+ch]~pcrit.working$times,type="l",col="red")
+
+  pcrit.resp=resp.closed(pcrit.working,volume=pcrit.log$vol[guess],
+            weight=mass,smooth="loess",channel=ch,smooth.span = 0.2)
+  pcrit.bin=aggregate(pcrit.resp$resp~round(pcrit.resp$po2,1),FUN="mean")
+  colnames(pcrit.bin)=c("po2","resp")
+
+  plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3,MR=rmr) 
+
+  pcrits[co,1]=filename
+  pcrits[co,2]=pcrit.log$filename[guess]
+  pcrits[co,3]=octo
+  pcrits[co,4]=mass
+  pcrits[co,5]=pcrits$pco2[guess]
+  pcrits[co,6]=pcrits$day[guess]
+  pcrits[co,7]=rmr
+  if (min(pcrit.working[,3+ch])<50){
+    if(max(pcrit.bin$resp)>rmr){
+    pcrits[co,8]=as.numeric(calc_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3,MR=rmr)[1])
+    }else{
+      pcrits[co,8]=as.numeric(calc_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3)[1])
+    }
+  }else{
+    pcrits[co,8]=NA
+  }
+  co=co+1
+  
+}
+
+
+}
+
+
+
+
+
+```
