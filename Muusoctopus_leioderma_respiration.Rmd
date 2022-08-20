@@ -63,7 +63,7 @@ write.csv(cbind(basename(rmr.files),file_check,score),file = "filecheck.csv")
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 column.count=1
 for (i in 1:length(rmr.files)){
   filename=rmr.files[i]
@@ -131,7 +131,7 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 write.csv(routine,"RMR_Results.csv")
 ```
 
@@ -185,12 +185,25 @@ kable(rmr.lme.table)
 ```{r}
 predictions=data.frame(
   day=c(1,7,1,7),
-  mass.log=log(rep(log(25.6),4)),
+  mass.log=log(rep(log(21.6),4)),
   pco2=as.factor(c(1000,1000,1800,1800))
 )
 
-exp(predict(routine.lme,newdata=predictions,level=0))
+predict(routine.lme,newdata=predictions,level=0)
 
+```
+```{r}
+predictions=data.frame(
+  day=c(1,1,7,7),
+  mass.log=rep(2.91,4),
+  pco2=as.factor(c(1000,1800,1000,1800))
+)
+
+predict(routine.lme,newdata=predictions,level=0)
+
+```
+```{r}
+emmeans(routine.lme,~pco2+day+mass.log)
 ```
 
 
@@ -263,4 +276,12 @@ lines(exp(seq7.1000),exp(pred7.1000),col="blue",lwd=2,lty=1)
 ```
 
 
+```{r}
+median(routine$mass)
+
+
+predict(routine.lme,newdata=data.frame())
+
+exp(predict(routine.lme,newdata = df1.1800[65,],level=0))
+```
 
