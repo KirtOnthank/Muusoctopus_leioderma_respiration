@@ -3,7 +3,7 @@ title: "*Muusoctopus leioderma* respiration"
 author: "Lloyd Trueblood and Kirt Onthank"
 date: "`r Sys.Date()`"
 output: 
-  pdf_document:
+  word_document:
     toc: true
     number_sections: true
     toc_depth: 3

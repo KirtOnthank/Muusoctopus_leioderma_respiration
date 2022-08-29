@@ -1,5 +1,5 @@
 ---
-title: "Pcrit Run Evaluation"
+title: "Critical Oxygen Pressure Analysis"
 author: "Kirt L Onthank"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -165,6 +165,8 @@ if(!is.na(pcrit.log$ch2[guess])){
 
 
 ```
+
+
 ```{r}
 pcrits=pcrits[complete.cases(pcrits),]
 pcrits=pcrits[pcrits$filename!="GR1 Muus1000 pcrit 7-21-21.txt",]
