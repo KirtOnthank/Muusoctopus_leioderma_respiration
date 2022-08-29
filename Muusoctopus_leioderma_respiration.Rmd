@@ -1,14 +1,24 @@
 ---
-title: "Muusoctopus leioderma respiration"
+title: "*Muusoctopus leioderma* respiration"
 author: "Lloyd Trueblood and Kirt Onthank"
-date: "9/23/2021"
-output:
-  pdf_document: default
-  word_document: default
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    toc_depth: 3
 ---
 
 # Reading in libraries
-```{r}
+I am reading in the libraries I use for this analysis.  Included among these is the "OTools" package, which was written by Kirt Onthank. This can be install from github using the command: 
+```{r, eval=F}
+install_github('KirtOnthank\OTools')
+```
+
+The install_github command is from the 'remotes' library.
+
+
+```{r message=FALSE, warning=FALSE}
 library(OTools)
 library(xlsx)
 library(nlme)
@@ -19,6 +29,7 @@ library(knitr)
 ```
 
 # Find the relevant files
+This code is meant to find the metabolic rate files in the current directory and sort them into their types.
 ```{r}
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
@@ -31,19 +42,27 @@ rmr.files=rmr.files[!duplicated(basename(rmr.files))]
 ```
 
 
-# Reading in the data log xlsx file
+# Reading in the data log file
+This reads in the data log file, which contains information on octopus mass, flow rate, and other associated information.
 ```{r}
 data.log=read.csv("Muus_Data_Log.csv")
 ```
 
 # Running the RMR data analysis
-First I am going to make a object to put the RMR data into
+First I am going to make a object to put the RMR data into.
 ```{r}
-routine=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo=as.character(),mass=as.numeric(),pco2=as.numeric(),day=as.numeric(),rmr=as.numeric())
+routine=data.frame(filename=as.character(),
+                   spreadsheet_guess=as.character(),
+                   octo=as.character(),
+                   mass=as.numeric(),
+                   pco2=as.numeric(),
+                   day=as.numeric(),
+                   rmr=as.numeric()
+                   )
 ```
 
 
-filename match check
+Then I am running a quick check to make sure that we are matching file names of the metabolic runs with the lines in the Data Log file.
 ```{r}
 file_check=as.character()
 score=as.numeric()
@@ -55,14 +74,9 @@ for (i in 1:length(rmr.files)){
 }
 
 write.csv(cbind(basename(rmr.files),file_check,score),file = "filecheck.csv")
-
-#i=27
-#cbind(t(adist(basename(rmr.files[i]),data.log$File.name)),basename(rmr.files),basename(rmr.files)[i])
-
-#sum(is.na(resp$O23))<10&!grepl("blank",filename)
 ```
 
-
+Nest, I run the analysis to calculate RMR from each file.  We are discarding the first three hours (using data as resp[resp$times>3600*3,] in the resp.open function) from each run to account for elevated metabolic rate at the beginning of the run.
 ```{r, eval=FALSE}
 column.count=1
 for (i in 1:length(rmr.files)){
@@ -86,7 +100,10 @@ guess=which.min(adist(basename(filename),data.log$File.name))
       mass=10
     }
     print("calculating rmr")
-    resp.mean=mean(resp.open(resp[resp$times>3600*3,],flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
+    resp.mean=mean(resp.open(resp[resp$times>3600*3,],
+                             flow.rate=flow*1000,
+                             weight=mass)$resp,
+                   na.rm=T)
     print("writing data to object")
     routine[column.count,1]=basename(filename)
     routine[column.count,2]=data.log$File.name[guess]
@@ -106,7 +123,11 @@ guess=which.min(adist(basename(filename),data.log$File.name))
       print("found second respirometer")
       flow=as.numeric(data.log$Flow.rate.2[guess])
       mass=as.numeric(data.log$Mass.2[guess])
-      resp.mean=mean(resp.open(resp[resp$times>3600,],inflow=3,outflow=4,flow.rate=flow*1000,weight=mass)$resp,na.rm=T)
+      resp.mean=mean(resp.open(resp[resp$times>3600*3,],
+                               inflow=3,
+                               outflow=4,
+                               flow.rate=flow*1000,
+                               weight=mass)$resp,na.rm=T)
       print("writing data to object")
       routine[column.count,1]=basename(filename)
       routine[column.count,2]=data.log$File.name[guess]
@@ -130,7 +151,7 @@ guess=which.min(adist(basename(filename),data.log$File.name))
 
 ```
 
-
+In order to not need to re-run the analysis each time, I am writing the results out to a .csv, then reading it back in.  I will set both the evaluation of this chunk and the last to FALSE.
 ```{r, eval=FALSE}
 write.csv(routine,"RMR_Results.csv")
 ```
@@ -142,24 +163,24 @@ routine=read.csv("RMR_Results.csv")
 
 # Running linear effects model
 
-# log-log transformation
+To make the relationship linear between mass and metabolic rate linear, I took the log of both.
 ```{r}
 routine$mass.log=log(routine$mass)
 routine$rmr.log=log(routine$rmr)
 ```
 
 
-## setting pCO2 to factor class:
+Setting pCO~2~ to factor class:
 ```{r short_input}
 routine$pco2=as.factor(routine$pco2)
 ```
 
-## Next I set orthogonal contrasts:
+Next I set orthogonal contrasts:
 ```{r short_contrast}
 contrasts(routine$pco2)=contr.poly(2) 
 ```
 
-## Running the linear mixed effects model and ANOVA using type III sum of squares:
+Running the linear mixed effects model and ANOVA using type III sum of squares:
 ```{r linear mixed effects model}
 routine.lme=lme(rmr.log~mass.log+pco2+day,random=~1|octo,
              correlation=corAR1(form=~day|octo),
@@ -182,34 +203,43 @@ kable(rmr.lme.table)
 
 
 
-```{r}
-predictions=data.frame(
-  day=c(1,7,1,7),
-  mass.log=log(rep(log(21.6),4)),
-  pco2=as.factor(c(1000,1000,1800,1800))
-)
 
-predict(routine.lme,newdata=predictions,level=0)
+# Summary of LME 
+```{r}
+routine.em=data.frame(emmeans(routine.lme,~pco2+day+mass.log))
+routine.em
 
 ```
 ```{r}
-predictions=data.frame(
-  day=c(1,1,7,7),
-  mass.log=rep(2.91,4),
-  pco2=as.factor(c(1000,1800,1000,1800))
-)
-
-predict(routine.lme,newdata=predictions,level=0)
-
+rmr.df=
+data.frame(cbind(
+  as.numeric(as.character(routine.em$pco2)),
+  routine.em$day,
+  sprintf("%.2f",signif(exp(routine.em$emmean),3)),
+  paste(sprintf("%.2f",signif(exp(data.frame(routine.em)$lower.CL),3)),
+        "-",
+        sprintf("%.2f",signif(exp(data.frame(routine.em)$upper.CL),3)))
+))
+rmr.df
 ```
+
 ```{r}
-emmeans(routine.lme,~pco2+day+mass.log)
+colnames(rmr.df)=c("pCO~2~ ($\\mu$atm)",
+                   "day",
+                   "Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)",
+                   "RMR 95% CI")
+kable(rmr.df,align="c")
 ```
 
 
-# Regressions
+
+
+
+
+# Plotting the data
+## Predicted values
+First I am getting the model predicted values for each treatment between the max an minimum mass values.
 ```{r}
-#reg1.1800=nls(rmr~a*mass^b,data=routine[routine$pco2==1800&routine$day==1,],start=list(a=10,b=-0.7))
 seq1.1800=seq(from=min(routine$mass.log[routine$pco2==1800]),
               to=max(routine$mass.log[routine$pco2==1800]),
               length.out=100)
@@ -221,7 +251,6 @@ df1.1800=data.frame(
 )
 pred1.1800= predict(routine.lme,newdata = df1.1800,level=0)
 
-#reg1.1000=nls(rmr~a*mass^b,data=routine[routine$pco2==1000&routine$day==1,],start=list(a=10,b=-0.7))
 seq1.1000=seq(from=min(routine$mass.log[routine$pco2==1000]),
               to=max(routine$mass.log[routine$pco2==1000]),
               length.out=100)
@@ -234,7 +263,6 @@ df1.1000=data.frame(
 
 pred1.1000=predict(routine.lme,newdata = df1.1000,level=0)
 
-#reg7.1800=nls(rmr~a*mass^b,data=routine[routine$pco2==1800&routine$day==7,],start=list(a=10,b=-0.7))
 seq7.1800=seq(from=min(routine$mass.log[routine$pco2==1800]),
               to=max(routine$mass.log[routine$pco2==1800]),
               length.out=100)
@@ -247,13 +275,12 @@ df7.1800=data.frame(
 
 pred7.1800=predict(routine.lme,newdata = df7.1800,level=0)
 
-#reg7.1000=nls(rmr~a*mass^b,data=routine[routine$pco2==1000&routine$day==7,],start=list(a=10,b=-0.7))
 seq7.1000=seq(from=min(routine$mass.log[routine$pco2==1000]),
               to=max(routine$mass.log[routine$pco2==1000]),
               length.out=100)
 
 df7.1000=data.frame(
-  day=rep(77,100),
+  day=rep(7,100),
   mass.log=seq7.1000,
   pco2=as.factor(rep(1000,100))
 )
@@ -262,26 +289,74 @@ pred7.1000=predict(routine.lme,newdata = df7.1000,level=0)
 
 ```
 
+Next, I am actually plotting it. 
 ```{r}
-plot(rmr~mass,data=routine[routine$octo!="2-1",],log="xy")
-points(rmr~mass,data=routine[routine$pco2==1000&routine$day==1&routine$octo!="2-1",],pch=21,bg="white",col="blue")
-points(rmr~mass,data=routine[routine$pco2==1000&routine$day==7&routine$octo!="2-1",],pch=21,bg="blue")
-points(rmr~mass,data=routine[routine$pco2==1800&routine$day==7&routine$octo!="2-1",],pch=21,bg="red")
-points(rmr~mass,data=routine[routine$pco2==1800&routine$day==1&routine$octo!="2-1",],pch=21,bg="white",col="red")
+svg(filename="Figure_1.svg",height=3.5,width=3.5,pointsize=6)
+par(fig=c(0.04,1,0,1))
+plot(rmr~mass,data=routine[routine$octo!="2-1",],log="xy",axes=F,ylab="",xlab="",type="n")
+box(lwd=2)
+axis(1,lwd=2,cex.axis=1.5)
+axis(2,lwd=2,cex.axis=1.5)
+mtext(expression("Routine Metabolic Rate ("*mu*"molO"[2]*" g"^-1*"hr"^-1*")"),
+      side=2,cex=1.8,line=2.5)
+mtext("Mass (g)",side=1,cex=1.8,line=2.5)
+
+points(rmr~mass,data=routine[routine$pco2==1000&routine$day==1&routine$octo!="2-1",],
+       pch=21,bg="white",col="blue",cex=2)
+points(rmr~mass,data=routine[routine$pco2==1000&routine$day==7&routine$octo!="2-1",],
+       pch=21,bg="blue",cex=2)
+points(rmr~mass,data=routine[routine$pco2==1800&routine$day==7&routine$octo!="2-1",],
+       pch=21,bg="red",cex=2)
+points(rmr~mass,data=routine[routine$pco2==1800&routine$day==1&routine$octo!="2-1",],
+       pch=21,bg="white",col="red",cex=2)
 lines(exp(seq1.1800),exp(pred1.1800),col="red",lwd=2,lty=2)
 lines(exp(seq1.1000),exp(pred1.1000),col="blue",lwd=2,lty=2)
 lines(exp(seq7.1800),exp(pred7.1800),col="red",lwd=2,lty=1)
 lines(exp(seq7.1000),exp(pred7.1000),col="blue",lwd=2,lty=1)
+legend("topright", c(expression("1000 "*mu*"atm pCO"["2"]*", day 1"),
+                     expression("1000 "*mu*"atm pCO"["2"]*", day 7"),
+                     expression("1800 "*mu*"atm pCO"["2"]*", day 1"),
+                     expression("1800 "*mu*"atm pCO"["2"]*", day 7")),
+       pch = 21,bty="n",title = expression("Treatment pCO"["2"]),
+       pt.bg=c("white","blue","white","red"),col=c("blue","black","red","black"),
+       inset = .02,cex=1.3,box.lwd=2,pt.lwd=1,pt.cex=2)
+
+dev.off()
+
 
 ```
+Converting the image to a png to be displayed in the RMarkdown.
+```{bash}
+cairosvg Figure_1.svg -o Figure_1.png -d 300
+```
+
+Converting to eps for submission.
+```{bash}
+inkscape Figure_1.svg -o Figure_1.eps --export-ignore-filters --export-ps-level=3
+```
+
+![work in progress text](Figure_1.png)
+
 
 
 ```{r}
-median(routine$mass)
+#logmass=log(median(routine$mass))
+logmass=2.906025
+rmr.df=data.frame(day=c(1,1,7,7),
+           pCO2=c(1000,1800,1000,1800),
+           RMR=round(exp(predict(routine.lme,
+                  newdata=data.frame(
+                       day=c(1,1,7,7),
+                       mass.log=rep(logmass,4),
+                       pco2=as.factor(c(1000,1800,1000,1800))),
+                     level=0)
+                )[1:4],2)
+           )
 
+colnames(rmr.df)[2]="pCO~2~ ($\\mu$atm)"
+colnames(rmr.df)[3]="Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)"
 
-predict(routine.lme,newdata=data.frame())
+kable(rmr.df,align="c")
 
-exp(predict(routine.lme,newdata = df1.1800[65,],level=0))
 ```
 
