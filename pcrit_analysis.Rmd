@@ -1,18 +1,29 @@
 ---
-title: "Critical Oxygen Pressure Analysis"
-author: "Kirt L Onthank"
+title: "Critical Oxygen Pressure (P~CRIT~) Analysis"
+author: "Lloyd Trueblood and Kirt Onthank"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    toc_depth: 3
 ---
 
-```{r}
+# Loading Libraries
+I am reading in the libraries I use for this analysis.  Included among these is the "OTools" package, which was written by Kirt Onthank. This can be install from github using the command: 
+```{r eval=FALSE}
+install_github('KirtOnthank\OTools')
+```
+
+
+```{r message=FALSE, warning=FALSE}
 library(OTools)
 library(respirometry)
 library(knitr)
 library(nlme)
 library(car)
 ```
-
+# Sorting files for P~CRIT~ analysis
 ```{r}
 files=list.files(recursive=T)
 resp.files=grep(".txt",files,value=T)
@@ -20,24 +31,38 @@ pcrit.files=grep("pcrit|pcrti",resp.files,value=T,ignore.case=T)
 pcrit.files=pcrit.files[!duplicated(basename(pcrit.files))]
 
 pcrit.files.read=pcrit.files[!grepl("ch2.txt|ch3.txt|ch4.txt|\\(1\\).txt",pcrit.files)]
-write.csv(basename(pcrit.files.read),file = "pcrit_read_log.csv")
 pcrit.files.read
 ```
 
-
+# Reading in log files
+Here I am reading in the log files that will provide additional information needed to analyze the raw data files.
 ```{r}
 pcrit.log=read.csv("pcrit_log.csv")
 routine=read.csv("RMR_Results.csv")
 ```
 
-
+# Calculating P~CRIT~ from raw data
+First I make a empty object where I can place calculated P~CRIT~s 
 ```{r}
-pcrits=data.frame(filename=as.character(),spreadsheet_guess=as.character(),octo=as.character(),mass=as.numeric(),pco2=as.numeric(),day=as.numeric(),rmr=as.numeric(),pcrit=as.numeric())
+pcrits=data.frame(filename=as.character(),
+                  spreadsheet_guess=as.character(),
+                  octo=as.character(),
+                  mass=as.numeric(),
+                  pco2=as.numeric(),
+                  day=as.numeric(),
+                  rmr=as.numeric(),
+                  pcrit=as.numeric()
+                  )
 
 ```
 
+Next, I calculate the P~CRIT~ from each data file.  Here are a couple of important points on our calculations:
 
-```{r warning=FALSE}
+1. We are using the alpha P~CRIT~ method (Seibel et al, 2021) to calculate P~CRIT~ as implemented by the calc_pcrit() function from the "respirometry" R package (Birk, 2021).
+2. We used the routine metabolic rate that we measured for each individual octopus in this study, unless the maximum metabolic rate measured during the P~CRIT~ run was less than the RMR we had measured. In those cases we used the default MR used by the function, which is "the mean MO2 value from the oxyregulating portion of the curve (as defined by the broken-stick regression)". 
+3. Any run in which O~2~ did not drop below 50 mmHgO~2~ was dropped from the analysis. All runs, however, including those dropped, are graphed below.
+4. Oxygen trace of each run is graphed below with the portion used to calculate P~CRIT~ plotted in red.
+```{r message=FALSE, warning=FALSE}
 co=1
 
 for (i in 1:length(pcrit.files.read)){
@@ -132,8 +157,13 @@ if(!is.na(pcrit.log$ch2[guess])){
   pcrit.bin=aggregate(pcrit.resp$resp~round(pcrit.resp$po2,1),FUN="mean")
   colnames(pcrit.bin)=c("po2","resp")
 
-  plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
-           avg_top_n = 3,MR=rmr) 
+  if(max(pcrit.bin$resp)>rmr){
+    plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3,MR=rmr)   
+  }else{
+    plot_pcrit(pcrit.bin$po2,pcrit.bin$resp,
+           avg_top_n = 3)
+  }
 
   pcrits[co,1]=filename
   pcrits[co,2]=pcrit.log$filename[guess]
@@ -160,13 +190,9 @@ if(!is.na(pcrit.log$ch2[guess])){
 
 }
 
-
-
-
-
 ```
 
-
+Next, I remove the measurements for which the data was excluded (runs did not reach oxygen level of 50 mmHgO~2~).   Then I remove the file for which there is no initial data.
 ```{r}
 pcrits=pcrits[complete.cases(pcrits),]
 pcrits=pcrits[pcrits$filename!="GR1 Muus1000 pcrit 7-21-21.txt",]
@@ -177,10 +203,7 @@ pcrits=pcrits[pcrits$filename!="GR1 Muus1000 pcrit 7-21-21.txt",]
 plot(pcrit~mass,data=pcrits)
 ```
 
-
-```{r}
-aggregate(pcrit~pco2+day,data=pcrits,FUN="length")
-```
+# Linear mixed effect model
 
 ## setting pCO2 to factor class:
 ```{r short_input}
@@ -192,11 +215,6 @@ pcrits$pco2=as.factor(pcrits$pco2)
 contrasts(pcrits$pco2)=contr.poly(2) 
 ```
 
-```{r}
-aggregate(pcrit~day+octo,data=pcrits,FUN="length")
-```
-
-
 ## Running the linear mixed effects model and ANOVA using type III sum of squares:
 ```{r linear mixed effects model}
 pcrits.lme=lme(pcrit~mass+pco2+day,random=~1|octo,
@@ -205,11 +223,33 @@ pcrits.lme=lme(pcrit~mass+pco2+day,random=~1|octo,
 
 Anova(pcrits.lme,type="III")
 ```
-## Plotting the lme results
+# Plotting the Critical Oxygen Pressure results
 
 
 ```{r}
-boxplot(pcrit~day+pco2,data=pcrits,range=0)
+svg(filename = "Figure_2.svg",width=3.5,height=3.5,pointsize=5)
+par(fig=c(0.05,1,0.03,1))
+boxplot(pcrit~day+pco2,data=pcrits,range=0,
+        axes=F,col=c("grey75","grey40","grey75","grey40"),ylab="",xlab="")
+box()
+abline(v=2.5)
+axis(1, at=c(1.5,3.5),labels = c(1000,1800),tick=F,cex.axis=2)
+axis(2,at=c(2,4,6,8),cex.axis=2)
+mtext(expression("Critical Oxygen Pressure (kPa)"),side=2,cex=2.7,line=3)
+mtext(expression("pCO"[2]*" ("*mu*"atm)"),side=1,cex=2.7,line=4)
+legend(3.5,8.5,pt.bg=c("grey75","grey40"),legend=c("Day 1","Day 7"),
+       pch=22,cex=2,pt.cex=5,bty="n")
+dev.off()
+```
+Converting the image to a png to be displayed in the RMarkdown.
+```{bash}
+cairosvg Figure_2.svg -o Figure_2.png -d 300
 ```
 
+Converting to eps for submission.
+```{bash}
+inkscape Figure_2.svg -o Figure_2.eps --export-ignore-filters --export-ps-level=3
+```
+
+![work in progress text](Figure_2.png)
 

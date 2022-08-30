@@ -1,6 +1,6 @@
 ---
 title: "OA Treatment Summary"
-author: "Kirt L Onthank"
+author: "Lloyd Trueblood and Kirt Onthank"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
@@ -130,21 +130,29 @@ kable(OA_Summary,align="c")
 treatment.sum=data.frame(
   Treatment=c("Control","Elevated CO~2~"),
   pCO2=paste0(round(aggregate(pco2~treat,data=OA_Summary,FUN="mean")$pco2),"±",
-  c(round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1000]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1000))),
-    round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1800]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1800))))
+  c(round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1000]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1000))),
+    round(sqrt(mean(OA_Summary$pco2.sd[OA_Summary$treat==1800]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1800))))
   ),
 #  round(aggregate(pco2~treat,data=OA_Summary,FUN="sd")$pco2)),
   pH=paste0(round(aggregate(ph~treat,data=OA_Summary,FUN="mean")$ph,3),"±",
-  c(round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1000]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1000)),3),
-    round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1800]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1800)),3))
+  c(round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1000]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1000)),3),
+    round(sqrt(mean(OA_Summary$ph.sd[OA_Summary$treat==1800]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1800)),3))
   ),
   Alkalinity=paste0(round(aggregate(alk~treat,data=OA_Summary,FUN="mean")$alk),"±",
-  c(round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1000]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1000)),0),
-    round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1800]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1800)),0))
+  c(round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1000]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1000)),0),
+    round(sqrt(mean(OA_Summary$alk.sd[OA_Summary$treat==1800]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1800)),0))
   ),
   Salinity=paste0(round(aggregate(salinity~treat,data=OA_Summary,FUN="mean")$salinity,1),"±",
-  c(round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1000]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1000)),1),
-    round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1800]^2,na.rm=T))/sqrt(sum(OA_Summary$treat==1800)),1))
+  c(round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1000]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1000)),1),
+    round(sqrt(mean(OA_Summary$salinity.sd[OA_Summary$treat==1800]^2,na.rm=T))/
+            sqrt(sum(OA_Summary$treat==1800)),1))
   )
 )
 
