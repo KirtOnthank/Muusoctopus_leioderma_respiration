@@ -3,7 +3,7 @@ title: "*Muusoctopus leioderma* respiration"
 author: "Lloyd Trueblood and Kirt Onthank"
 date: "`r Sys.Date()`"
 output: 
-  word_document:
+  pdf_document:
     toc: true
     number_sections: true
     toc_depth: 3
@@ -161,9 +161,22 @@ routine=read.csv("RMR_Results.csv")
 ```
 
 
+```{r}
+routine.table=routine[,4:8]
+routine.table=routine.table[order(routine.table$octo),]
+colnames(routine.table)=c("Octopus ID",
+  "Mass (g)",
+  "pCO~2~ ($\\mu$atm)",
+  "Day",
+  "Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)"
+  )
+kable(routine.table,align="c",row.names = F)
+```
+
+
 # Running linear effects model
 
-To make the relationship linear between mass and metabolic rate linear, I took the log of both.
+To make the relationship linear between mass and metabolic rate linear, we take the log of both.
 ```{r}
 routine$mass.log=log(routine$mass)
 routine$rmr.log=log(routine$rmr)
@@ -182,11 +195,10 @@ contrasts(routine$pco2)=contr.poly(2)
 
 Running the linear mixed effects model and ANOVA using type III sum of squares:
 ```{r linear mixed effects model}
-routine.lme=lme(rmr.log~mass.log+pco2+day,random=~1|octo,
+routine.lme=lme(rmr.log~mass.log*pco2*day,random=~1|octo,
              correlation=corAR1(form=~day|octo),
               data=routine[routine$octo!="2-1",])
 routine.anova=Anova(routine.lme,type="III")
-routine.anova
 ```
 
 ```{r}
@@ -210,6 +222,9 @@ routine.em=data.frame(emmeans(routine.lme,~pco2+day+mass.log))
 routine.em
 
 ```
+
+
+
 ```{r}
 rmr.df=
 data.frame(cbind(
@@ -220,6 +235,7 @@ data.frame(cbind(
         "-",
         sprintf("%.2f",signif(exp(data.frame(routine.em)$upper.CL),3)))
 ))
+rmr.df=rmr.df[order(rmr.df[,1]),]
 rmr.df
 ```
 
@@ -228,7 +244,7 @@ colnames(rmr.df)=c("pCO~2~ ($\\mu$atm)",
                    "day",
                    "Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)",
                    "RMR 95% CI")
-kable(rmr.df,align="c")
+kable(rmr.df,align="c",row.names = F)
 ```
 
 
@@ -289,6 +305,13 @@ pred7.1000=predict(routine.lme,newdata = df7.1000,level=0)
 
 ```
 
+Assigning the colors for the treatments.
+```{r}
+hi.co2.col="#e78b6bff"
+lo.co2.col="#579ea3ff"
+```
+
+
 Next, I am actually plotting it. 
 ```{r}
 svg(filename="Figure_1.svg",height=3.5,width=3.5,pointsize=6)
@@ -302,23 +325,23 @@ mtext(expression("Routine Metabolic Rate ("*mu*"molO"[2]*" g"^-1*"hr"^-1*")"),
 mtext("Mass (g)",side=1,cex=1.8,line=2.5)
 
 points(rmr~mass,data=routine[routine$pco2==1000&routine$day==1&routine$octo!="2-1",],
-       pch=21,bg="white",col="blue",cex=2)
+       pch=21,bg="white",col=lo.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1000&routine$day==7&routine$octo!="2-1",],
-       pch=21,bg="blue",cex=2)
+       pch=21,bg=lo.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1800&routine$day==7&routine$octo!="2-1",],
-       pch=21,bg="red",cex=2)
+       pch=21,bg=hi.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1800&routine$day==1&routine$octo!="2-1",],
-       pch=21,bg="white",col="red",cex=2)
-lines(exp(seq1.1800),exp(pred1.1800),col="red",lwd=2,lty=2)
-lines(exp(seq1.1000),exp(pred1.1000),col="blue",lwd=2,lty=2)
-lines(exp(seq7.1800),exp(pred7.1800),col="red",lwd=2,lty=1)
-lines(exp(seq7.1000),exp(pred7.1000),col="blue",lwd=2,lty=1)
+       pch=21,bg="white",col=hi.co2.col,cex=1.5)
+lines(exp(seq1.1800),exp(pred1.1800),col=hi.co2.col,lwd=2,lty=2)
+lines(exp(seq1.1000),exp(pred1.1000),col=lo.co2.col,lwd=2,lty=2)
+lines(exp(seq7.1800),exp(pred7.1800),col=hi.co2.col,lwd=2,lty=1)
+lines(exp(seq7.1000),exp(pred7.1000),col=lo.co2.col,lwd=2,lty=1)
 legend("topright", c(expression("1000 "*mu*"atm pCO"["2"]*", day 1"),
                      expression("1000 "*mu*"atm pCO"["2"]*", day 7"),
                      expression("1800 "*mu*"atm pCO"["2"]*", day 1"),
                      expression("1800 "*mu*"atm pCO"["2"]*", day 7")),
        pch = 21,bty="n",title = expression("Treatment pCO"["2"]),
-       pt.bg=c("white","blue","white","red"),col=c("blue","black","red","black"),
+       pt.bg=c("white",lo.co2.col,"white",hi.co2.col),col=c(lo.co2.col,"black",hi.co2.col,"black"),
        inset = .02,cex=1.3,box.lwd=2,pt.lwd=1,pt.cex=2)
 
 dev.off()
@@ -342,21 +365,47 @@ inkscape Figure_1.svg -o Figure_1.eps --export-ignore-filters --export-ps-level=
 ```{r}
 #logmass=log(median(routine$mass))
 logmass=2.906025
-rmr.df=data.frame(day=c(1,1,7,7),
-           pCO2=c(1000,1800,1000,1800),
+rmr.df.check=data.frame(pCO2=c(1000,1000,1800,1800),
+           day=c(1,7,1,7),
            RMR=round(exp(predict(routine.lme,
                   newdata=data.frame(
-                       day=c(1,1,7,7),
+                       day=c(1,7,1,7),
                        mass.log=rep(logmass,4),
-                       pco2=as.factor(c(1000,1800,1000,1800))),
+                       pco2=as.factor(c(1000,1000,1800,1800))),
                      level=0)
                 )[1:4],2)
            )
 
-colnames(rmr.df)[2]="pCO~2~ ($\\mu$atm)"
-colnames(rmr.df)[3]="Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)"
+colnames(rmr.df.check)[1]="pCO~2~ ($\\mu$atm)"
+colnames(rmr.df.check)[3]="Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)"
+kable(rmr.df.check,align="c",row.names=F)
 
-kable(rmr.df,align="c")
+```
+
+# Finding the slopes of the treatments
+
+Here I am producing a table of the slope and intercepts of the linear mixed effects model of routine metabolic rates.  These values correspond to the logged mass and logged RMR, and do not translate to the untransformed data.  The relationship between the untransformed data is not linear, and therefore has no slope. Also, because the log of 0 is infinite, these intercepts correspond instead to a mass of 1g (exp(0)=1).
+```{r}
+logmass=0
+routine.slope=data.frame(pCO2=c(1000,1000,1800,1800),
+           Day=c(1,7,1,7),
+           Intercept=round(exp(predict(routine.lme,
+                  newdata=data.frame(
+                       day=c(1,7,1,7),
+                       mass.log=rep(logmass,4),
+                       pco2=as.factor(c(1000,1000,1800,1800))),
+                     level=0)
+                )[1:4],2),
+           Slope=c(
+            round(-1*diff(range(pred1.1000))/diff(range(seq1.1000)),2),
+            round(-1*diff(range(pred7.1000))/diff(range(seq7.1000)),2),
+            round(-1*diff(range(pred1.1800))/diff(range(seq1.1800)),2),
+            round(-1*diff(range(pred7.1800))/diff(range(seq7.1800)),2)
+            )
+           )
+
+colnames(routine.slope)[1]="pCO~2~ ($\\mu$atm)"
+kable(routine.slope,align="c",row.names=F)
 
 ```
 
