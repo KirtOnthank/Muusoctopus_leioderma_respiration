@@ -347,9 +347,10 @@ dev.off()
 
 ```
 
-Converting the image to a png to be displayed in the RMarkdown.
+Converting the image to a png and jpg to be displayed in the RMarkdown.
 ```{bash}
 cairosvg Figure_3.svg -o Figure_3.png -d 300
+convert Figure_3.png Figure_3.jpg
 ```
 
 Converting to eps for submission.

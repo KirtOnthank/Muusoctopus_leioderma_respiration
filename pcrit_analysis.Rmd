@@ -284,9 +284,10 @@ legend(1,8,pt.bg=c(lo.co2.col,hi.co2.col),legend=c("1000","1800"),
        pch=22,cex=1.3,pt.cex=3.2,bty="n",adj=c(0,0.5),title=expression("pCO"[2]*" ("*mu*"atm)"))
 dev.off()
 ```
-Converting the image to a png to be displayed in the RMarkdown.
+Converting the image to a png and jpg to be displayed in the RMarkdown.
 ```{bash}
 cairosvg Figure_4.svg -o Figure_4.png -d 300
+convert Figure_4.png Figure_4.jpg
 ```
 
 Converting to eps for submission.
