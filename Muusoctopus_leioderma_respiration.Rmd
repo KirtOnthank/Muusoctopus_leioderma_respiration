@@ -222,7 +222,9 @@ routine.em=data.frame(emmeans(routine.lme,~pco2+day+mass.log))
 routine.em
 
 ```
-
+```{r}
+emmeans(routine.lme,~pco2)
+```
 
 
 ```{r}
@@ -246,10 +248,6 @@ colnames(rmr.df)=c("pCO~2~ ($\\mu$atm)",
                    "RMR 95% CI")
 kable(rmr.df,align="c",row.names = F)
 ```
-
-
-
-
 
 
 # Plotting the data
@@ -307,27 +305,27 @@ pred7.1000=predict(routine.lme,newdata = df7.1000,level=0)
 
 Assigning the colors for the treatments.
 ```{r}
-hi.co2.col="#e78b6bff"
-lo.co2.col="#579ea3ff"
+hi.co2.col="#790000ff"
+lo.co2.col="#838fd5ff"
 ```
 
 
 Next, I am actually plotting it. 
 ```{r}
-svg(filename="Figure_1.svg",height=3.5,width=3.5,pointsize=6)
+svg(filename="Figure_3.svg",height=3.5,width=3.5,pointsize=6)
 par(fig=c(0.04,1,0,1))
 plot(rmr~mass,data=routine[routine$octo!="2-1",],log="xy",axes=F,ylab="",xlab="",type="n")
 box(lwd=2)
-axis(1,lwd=2,cex.axis=1.5)
+axis(1,lwd=2,cex.axis=2)
 axis(2,lwd=2,cex.axis=1.5)
 mtext(expression("Routine Metabolic Rate ("*mu*"molO"[2]*" g"^-1*"hr"^-1*")"),
       side=2,cex=1.8,line=2.5)
 mtext("Mass (g)",side=1,cex=1.8,line=2.5)
 
 points(rmr~mass,data=routine[routine$pco2==1000&routine$day==1&routine$octo!="2-1",],
-       pch=21,bg="white",col=lo.co2.col,cex=1.5)
+       pch=22,bg="white",col=lo.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1000&routine$day==7&routine$octo!="2-1",],
-       pch=21,bg=lo.co2.col,cex=1.5)
+       pch=22,bg=lo.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1800&routine$day==7&routine$octo!="2-1",],
        pch=21,bg=hi.co2.col,cex=1.5)
 points(rmr~mass,data=routine[routine$pco2==1800&routine$day==1&routine$octo!="2-1",],
@@ -340,7 +338,7 @@ legend("topright", c(expression("1000 "*mu*"atm pCO"["2"]*", day 1"),
                      expression("1000 "*mu*"atm pCO"["2"]*", day 7"),
                      expression("1800 "*mu*"atm pCO"["2"]*", day 1"),
                      expression("1800 "*mu*"atm pCO"["2"]*", day 7")),
-       pch = 21,bty="n",title = expression("Treatment pCO"["2"]),
+       pch = c(22,22,21,21),bty="n",title = expression("Treatment pCO"["2"]),
        pt.bg=c("white",lo.co2.col,"white",hi.co2.col),col=c(lo.co2.col,"black",hi.co2.col,"black"),
        inset = .02,cex=1.3,box.lwd=2,pt.lwd=1,pt.cex=2)
 
@@ -348,20 +346,21 @@ dev.off()
 
 
 ```
+
 Converting the image to a png to be displayed in the RMarkdown.
 ```{bash}
-cairosvg Figure_1.svg -o Figure_1.png -d 300
+cairosvg Figure_3.svg -o Figure_3.png -d 300
 ```
 
 Converting to eps for submission.
 ```{bash}
-inkscape Figure_1.svg -o Figure_1.eps --export-ignore-filters --export-ps-level=3
+inkscape Figure_3.svg -o Figure_3.eps --export-ignore-filters --export-ps-level=3
 ```
 
-![work in progress text](Figure_1.png)
+![Routine metabolic rates (RMR) from M.leioderma in Burrows Bay, Anacortes Washington ](Figure_3.png)
 
 
-
+# Double checking the emmeans output using the predict() function as a reality check
 ```{r}
 #logmass=log(median(routine$mass))
 logmass=2.906025
@@ -381,6 +380,8 @@ colnames(rmr.df.check)[3]="Routine Metabolic Rate ($\\mu$O~2~ g^-1^ hr^-1^)"
 kable(rmr.df.check,align="c",row.names=F)
 
 ```
+
+
 
 # Finding the slopes of the treatments
 

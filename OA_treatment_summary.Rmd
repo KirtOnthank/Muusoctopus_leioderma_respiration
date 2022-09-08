@@ -2,31 +2,43 @@
 title: "OA Treatment Summary"
 author: "Lloyd Trueblood and Kirt Onthank"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    toc_depth: 3
 ---
 
+# Loading libraries
 ```{r}
 library(knitr)
 ```
 
+# Reading in data files
+First we pull in the RMR results to get the treatment dates. This forms the basis of over what time periods to summarize tank conditions for each octopus. 
 ```{r}
 RMR=read.csv(file="RMR_Results.csv")
 ```
 
+Next, we extract dates from each file.
 ```{r}
 dates=strptime(gsub(".*([78]-\\d+-21).*","\\1",RMR$filename),format="%m-%d-%y")
 ```
 
+Now, we read in the OA data sheet that contains the daily carbonate chemistry results in each tank.
 ```{r}
 OA=read.csv("OA_Data_Sheet.csv")
 OA$Date=strptime(OA$Date,format="%Y/%m/%d")
 OA$Date=as.Date(OA$Date)
 ```
 
+# Per octopus summary
+We are going to summarize the *p*CO~2~ environment that each octopus experienced during the experiment.  To do this, First we get the ID's of each octopus in the study.
 ```{r}
 octos=unique(RMR$octo)
 ```
 
+Next, we are building a dataframe in which to place the summarize results. 
 ```{r}
 OA_Summary=data.frame(octo=as.character(rep(NA,17)),
                       start.date=rep(as.Date(OA$Date[1]),17),
@@ -45,6 +57,7 @@ OA_Summary=data.frame(octo=as.character(rep(NA,17)),
 
 ```
 
+The following loops get the beginning and ending dates for each octopus from the filenames and gets summary statistics for each carbonate chemistry parameter measured during that time period for the tank each octopus was in.
 ```{r}
 
 for (i in 1:length(octos)){
@@ -118,12 +131,15 @@ for (i in 1:length(octos)){
 
 ```
 
-
+This table give a summary of the carbonate conditions experienced by each octopus during the experiment.
 ```{r}
 kable(OA_Summary,align="c")
 ```
 
 
+
+# Per treatment summary
+Next, I want to summarize the condition actually experienced by octopuses in each treatment. 
 ```{r}
 
 

@@ -12,7 +12,7 @@ output:
 # Loading Libraries
 I am reading in the libraries I use for this analysis.  Included among these is the "OTools" package, which was written by Kirt Onthank. This can be install from github using the command: 
 ```{r eval=FALSE}
-install_github('KirtOnthank\OTools')
+install_github('KirtOnthank/OTools')
 ```
 
 
@@ -22,7 +22,9 @@ library(respirometry)
 library(knitr)
 library(nlme)
 library(car)
+library(emmeans)
 ```
+
 # Sorting files for P~CRIT~ analysis
 ```{r}
 files=list.files(recursive=T)
@@ -223,33 +225,74 @@ pcrits.lme=lme(pcrit~mass+pco2+day,random=~1|octo,
 
 Anova(pcrits.lme,type="III")
 ```
-# Plotting the Critical Oxygen Pressure results
+
+
+
+# Summary of LME 
+```{r}
+pcrit.em=data.frame(emmeans(pcrits.lme,~pco2+day+mass))
+pcrit.em
+
+```
+
 
 
 ```{r}
-svg(filename = "Figure_2.svg",width=3.5,height=3.5,pointsize=5)
-par(fig=c(0.05,1,0.03,1))
-boxplot(pcrit~day+pco2,data=pcrits,range=0,
-        axes=F,col=c("grey75","grey40","grey75","grey40"),ylab="",xlab="")
-box()
+pcrit.df=
+data.frame(cbind(
+  as.numeric(as.character(pcrit.em$pco2)),
+  pcrit.em$day,
+  sprintf("%.2f",signif(pcrit.em$emmean,3)),
+  paste(sprintf("%.2f",signif(data.frame(pcrit.em)$lower.CL,3)),
+        "-",
+        sprintf("%.2f",signif(data.frame(pcrit.em)$upper.CL,3)))
+))
+pcrit.df=pcrit.df[order(pcrit.df[,1]),]
+pcrit.df
+```
+
+```{r}
+colnames(pcrit.df)=c("pCO~2~ ($\\mu$atm)",
+                   "day",
+                   "P~CRIT~ (kPa)",
+                   "P~CRIT~ 95% CI")
+kable(pcrit.df,align="c",row.names = F)
+```
+
+
+
+# Plotting the Critical Oxygen Pressure results
+
+Assigning the colors for the treatments.
+```{r}
+hi.co2.col="#790000ff"
+lo.co2.col="#838fd5ff"
+```
+
+Next, making the figures in SVG format.
+```{r}
+svg(filename = "Figure_4.svg",width=3.5,height=3.5,pointsize=6)
+par(fig=c(0.04,1,0,1))
+boxplot(pcrit~pco2+day,data=pcrits,range=0,
+        axes=F,col=c(lo.co2.col,hi.co2.col,lo.co2.col,hi.co2.col),ylab="",xlab="")
+box(lwd=2)
 abline(v=2.5)
-axis(1, at=c(1.5,3.5),labels = c(1000,1800),tick=F,cex.axis=2)
-axis(2,at=c(2,4,6,8),cex.axis=2)
-mtext(expression("Critical Oxygen Pressure (kPa)"),side=2,cex=2.7,line=3)
-mtext(expression("pCO"[2]*" ("*mu*"atm)"),side=1,cex=2.7,line=4)
-legend(3.5,8.5,pt.bg=c("grey75","grey40"),legend=c("Day 1","Day 7"),
-       pch=22,cex=2,pt.cex=5,bty="n")
+axis(1, at=c(1.5,3.5),labels = c("Day 1","Day 7"),tick=F,cex.axis=1.5)
+axis(2,at=c(2,4,6,8),cex.axis=1.5)
+mtext(expression("Critical Oxygen Pressure (kPa)"),side=2,cex=1.8,line=3)
+legend(1,8,pt.bg=c(lo.co2.col,hi.co2.col),legend=c("1000","1800"),
+       pch=22,cex=1.3,pt.cex=3.2,bty="n",adj=c(0,0.5),title=expression("pCO"[2]*" ("*mu*"atm)"))
 dev.off()
 ```
 Converting the image to a png to be displayed in the RMarkdown.
 ```{bash}
-cairosvg Figure_2.svg -o Figure_2.png -d 300
+cairosvg Figure_4.svg -o Figure_4.png -d 300
 ```
 
 Converting to eps for submission.
 ```{bash}
-inkscape Figure_2.svg -o Figure_2.eps --export-ignore-filters --export-ps-level=3
+inkscape Figure_4.svg -o Figure_4.eps --export-ignore-filters --export-ps-level=3
 ```
 
-![work in progress text](Figure_2.png)
+![Critical oxygen pressure of Muusoctopus leioderma at differing pCO2 treatments](Figure_4.png)
 
