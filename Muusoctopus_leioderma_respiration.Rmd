@@ -193,7 +193,7 @@ Next I set orthogonal contrasts:
 contrasts(routine$pco2)=contr.poly(2) 
 ```
 
-Running the linear mixed effects model and ANOVA using type III sum of squares:
+Running the linear mixed effects model and ANOVA using type III sum of squares. I am excluding one octopus (2-1) from the analysis for which the day 1 data was lost (raw data file was misplaced or accidentally deleted).
 ```{r linear mixed effects model}
 routine.lme=lme(rmr.log~mass.log*pco2*day,random=~1|octo,
              correlation=corAR1(form=~day|octo),
@@ -203,7 +203,7 @@ routine.anova=Anova(routine.lme,type="III")
 
 ```{r}
 rmr.lme.table=cbind(
-  c("Mass","pCO2","Day"),
+  c("Mass","pCO~2~","Day"),
   round(routine.anova$Chisq[2:4],2),
   routine.anova$Df[2:4],
   round(routine.anova$`Pr(>Chisq)`[2:4],5)
@@ -222,6 +222,12 @@ routine.em=data.frame(emmeans(routine.lme,~pco2+day+mass.log))
 routine.em
 
 ```
+
+```{r}
+ref_grid(routine.lme)
+```
+
+
 ```{r}
 emmeans(routine.lme,~pco2)
 ```
@@ -353,6 +359,7 @@ cairosvg Figure_3.svg -o Figure_3.png -d 300
 convert Figure_3.png Figure_3.jpg
 ```
 
+
 Converting to eps for submission.
 ```{bash}
 inkscape Figure_3.svg -o Figure_3.eps --export-ignore-filters --export-ps-level=3
@@ -384,6 +391,7 @@ kable(rmr.df.check,align="c",row.names=F)
 
 
 
+
 # Finding the slopes of the treatments
 
 Here I am producing a table of the slope and intercepts of the linear mixed effects model of routine metabolic rates.  These values correspond to the logged mass and logged RMR, and do not translate to the untransformed data.  The relationship between the untransformed data is not linear, and therefore has no slope. Also, because the log of 0 is infinite, these intercepts correspond instead to a mass of 1g (exp(0)=1).
@@ -410,4 +418,27 @@ colnames(routine.slope)[1]="pCO~2~ ($\\mu$atm)"
 kable(routine.slope,align="c",row.names=F)
 
 ```
+
+
+# How much do the small octopuses affect the end results?
+One reviewer raised the concerns that the highly variability of RMR in small octopuses might skew the results. Here, I rum the lme again without those two octopuses and see how much they influence the final results.
+
+```{r low excluded linear mixed effects model}
+low.lme=lme(rmr.log~mass.log*pco2*day,random=~1|octo,
+             correlation=corAR1(form=~day|octo),
+              data=routine[routine$octo!="2-1"&routine$octo!="1-3"&routine$octo!="2-3",])
+low.anova=Anova(low.lme,type="III")
+low.lme.table=cbind(
+  c("Mass","pCO~2~","Day"),
+  round(low.anova$Chisq[2:4],2),
+  low.anova$Df[2:4],
+  round(low.anova$`Pr(>Chisq)`[2:4],5)
+)
+colnames(low.lme.table)=c("Factor","Chi-square", "DF", "p-value")
+
+kable(low.lme.table)
+```
+
+So, the exclusion of those small octopuses does not make the effect pCO~2~ or day significantly related to RMR.
+
 
