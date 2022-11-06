@@ -370,8 +370,7 @@ inkscape Figure_3.svg -o Figure_3.eps --export-ignore-filters --export-ps-level=
 
 # Double checking the emmeans output using the predict() function as a reality check
 ```{r}
-#logmass=log(median(routine$mass))
-logmass=2.906025
+logmass=mean(routine$mass.log[routine$octo!="2-1"]) #mean log of masses that went into the lme
 rmr.df.check=data.frame(pCO2=c(1000,1000,1800,1800),
            day=c(1,7,1,7),
            RMR=round(exp(predict(routine.lme,

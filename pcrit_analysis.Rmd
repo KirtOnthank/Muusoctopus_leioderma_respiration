@@ -47,6 +47,19 @@ pcrit.log=read.csv("pcrit_log.csv")
 routine=read.csv("RMR_Results.csv")
 ```
 
+
+The file named pcrit_log.csv contains all of the extra information that's needed to analyze the peak crip files exactly the way that we did. This includes the filenames in which the raw oxygen data is stored, the volume of the respirometer in which the analysis was performed in liters (vol), pCO2 in which the analysis was performed (pco2), the day of treatment on which the analysis was performed, where we trimmed the data to eliminate fluctuations at the beginning or the end of the trails (trim_left and trim_right), the identity of the octopus in the respirometer(s) (octo1 and octo2), and the file which contains the routine metabolic rate data which pairs with this analysis (rmr_match). 
+
+Here I am printing out the data in that file into tables to make it easier to view without opening up the CSV file in the directory. However, because of the many columns of data in that file, I need to print it out in four separate tables to make it format well in this PDF. 
+
+```{r}
+kable(pcrit.log[,1:6])
+kable(pcrit.log[,c(1,7:10)])
+kable(pcrit.log[,c(1,11:14)])
+kable(pcrit.log[,c(1,15:17)])
+```
+
+
 # Calculating P~CRIT~ from raw data
 
 First I make a empty object where I can place calculated P~CRIT~s

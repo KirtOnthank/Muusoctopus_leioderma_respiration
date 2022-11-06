@@ -1,0 +1,22 @@
+This directory contains all of the raw data, code, and accessory data needed to Replicate the analyses and produce all of the graphs found in the paper "Bathyal octopus, Muusoctopus leioderma, living in a world of acid: first recordings of routine metabolic rates and critical oxygen partial pressures of a deep water species under elevated pCO2"
+by Trueblood et al 2022.
+The Rmarkdown files in this directory are designed so that one could recreate the entire analysis by simply opening those Rmarkdown files in Rstudio, making sure you have the appropriate libraries installed, and then just hitting run and letting the code do all of the rest from the original raw data and the accessory data files. However, likely the most useful files to the average reader will be the PDF files that are the knitted versions of these are Rmarkdowns. These have been constructed with discussion and annotation of the analysis that we did so that one could easily follow each decision that we made in performing this analysis. They also contain many intermediate outputs and plots that are useful to those interested in the process at getting our final numbers but far too extensive to include in the published paper.
+
+
+=======================
+Routine Metabolic Rate
+=======================
+The file "Muusoctopus_leioderma_respiration.pdf" documents the process of analysis and the code used to derive routine metabolic rates from the raw data files of oxygen consumption and from an accessory data file ("Muus_Data_Log.csv") that contains analysis parameters such as respirometer flow rates and characteristics of the octopuses such as mass. This PDF contains all the code for which we ran the linear mixed effects model and how we calculate the RMR estimated marginal means by treatment that appear in table 2 of the paper .
+
+
+=======================
+Pcrit and Alpha
+=======================
+The file "pcrit_analysis.pdf" contains the analyses for critical oxygen pressure (Pcrit) and oxygen supply capacity (alpha) for this paper from raw data files and an accessory data file ("pcrit_log.csv") that documents data such as the volume of the respirometers in which the runs were conducted, at which record each data was trimmed to eliminate noisy data at the beginning and the end of file, and which raw RMR file is matched to any particular Pcrit run. This PDF file also contains each oxygen trace (oxygen concentration in respirometer plotted by time), and critical oxygen pressure trace (MO2 plotted versus PO2) for every critical oxygen pressure run we did. This file also contains all of the code for the linear effects models that we ran for critical oxygen pressure and oxygen supply capacity and the estimated marginal means calculated for each of those values per treatment as well.
+
+
+=======================
+Ocean acidification treatment summaries
+=======================
+
+The file "OA_treatment_summary.pdf" contains the code used to summarize individual measurements for treatment and control tanks that is then reported in table 1 of the paper. The raw data is contained in the file "OA_Data_Sheet.csv".
